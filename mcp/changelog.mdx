@@ -1,0 +1,49 @@
+---
+title: "Changelog"
+description: "Dated records of changes to the MCP infrastructure and to this documentation."
+keywords: ["changelog", "Graphify", "MCP", "merge"]
+---
+
+## Scope
+
+This page holds dated records only. Each entry describes what was observed on that date and is not a guarantee of the current state. Standing instructions are on [Connection setup](/mcp/connection-setup) and [Graphify reference](/mcp/graphify-reference).
+
+Add new entries at the top.
+
+## 15 November 2026
+
+### Documentation restructured
+
+The single guide "Connect an existing MCP server to ChatGPT — Version 2" was split into three pages: a generic connection setup, a Graphify reference and this changelog. Verification commands, a terms table and a separate origin-protection section were added to the setup page.
+
+### Guide version 2
+
+Source: `MCP_Connection_Setup.before-2026-11-15.md`.
+
+Version 2 kept the nine-step structure of the earlier guide and added:
+
+- The verified Graphify reference.
+- Graphify's separate bearer authentication.
+- The Access policy attachment requirement.
+- The supported multi-header configuration.
+- Current ChatGPT connection guidance.
+- Origin protection.
+- The safe documentation-merge procedure.
+
+### Graphify documentation merge
+
+[PR #1](https://github.com/SphereSK/graphify-gateway/pull/1) was merged as `2c4f5e6e6ebacd8c799214534bac667b1c54f78f`.
+
+- Graphify Auto Deploy was temporarily disabled and verified before merging, then restored to its previous enabled setting.
+- The merge title also included the skip marker supported by the inspected installed GitHub handler.
+
+Post-merge checks:
+
+- No new deployment record or queued job was found.
+- The production container kept its ID and start time and remained healthy.
+- Live verification passed all 12 MCP tools, authentication and the read-only export checks.
+- The connected portal returned 20 ready graphs.
+- The host gateway and both timers were active, and indexing and export results were successful.
+- Snapshot stale and refresh-failure flags were false.
+
+No deployment was needed for this documentation change. The remaining source-change, reboot and restore validation is described in the operations runbook.

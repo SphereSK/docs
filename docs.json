@@ -16,6 +16,14 @@
           "index",
           "quickstart"
         ]
+      },
+      {
+        "group": "MCP infrastructure",
+        "pages": [
+          "mcp/connection-setup",
+          "mcp/graphify-reference",
+          "mcp/changelog"
+        ]
       }
     ],
     "global": {

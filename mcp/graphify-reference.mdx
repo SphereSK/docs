@@ -1,0 +1,83 @@
+---
+title: "Graphify reference"
+description: "Verified values, acceptance checks and the safe documentation-merge procedure for the existing Graphify MCP deployment."
+keywords: ["Graphify", "MCP", "Dokploy", "auto deploy", "acceptance", "bearer token"]
+---
+
+## Scope
+
+This page records the existing Graphify MCP deployment: its verified values, what is specific to Graphify, how to check it, and how to merge documentation without triggering a deployment.
+
+For the generic steps to connect a new server, see [Connection setup](/mcp/connection-setup). For Graphify operations and rollback, see the [Graphify operations runbook](https://github.com/SphereSK/graphify-gateway/blob/feature/dokploy-container/OPERATIONS.md).
+
+<Warning>
+  The Graphify deployment works. Keep it as it is.
+
+  - Do not replay the setup steps against it.
+  - Do not broaden project approvals as part of connecting a client.
+  - Semantic indexing, per-user project isolation, new source approvals and write tools are separate changes, not part of this setup.
+</Warning>
+
+## Verified values
+
+Verified on 15 November 2026 (Europe/Bratislava). These are dated observations, not a guarantee of the current state.
+
+| Setting | Verified value |
+| --- | --- |
+| Repository and branch | `SphereSK/graphify-gateway`, `feature/dokploy-container` |
+| Service name | `graphify-gateway` |
+| Network alias | `datament-graphify` |
+| Internal port and network | `8007` on `dokploy-network`. No host port is published |
+| Upstream | `https://graphify.datament.sk/mcp` |
+| Client connection | The existing Datament Cloudflare MCP Portal. Copy its exact endpoint from the dashboard |
+| Runtime | Pinned Graphify 0.9.97, 12 read-only gateway tools |
+| Data | 20 ready graphs. `logiscool` has no suitable source at this baseline |
+| Automation | Managed export roughly one minute after completion. Indexing five minutes after completion |
+
+Container code, host index and export jobs, Cloudflare credentials and client OAuth are separate configurations.
+
+## What is specific to Graphify
+
+- **Internal address.** Internal clients use the unique alias `datament-graphify:8007`.
+- **Second authentication layer.** After Cloudflare Access succeeds, the Graphify gateway service authenticates `/mcp` with its own bearer token. The portal's server entry therefore carries three custom headers: `CF-Access-Client-Id`, `CF-Access-Client-Secret`, and `Authorization` with the value `Bearer <GRAPHIFY_BEARER_TOKEN>`.
+- **Where the bearer token is stored.** In the private Dokploy environment and in the protected portal upstream headers. Keep it out of Git, URLs and logs.
+- **User authentication.** The credentials are supplied by an administrator, so **Require user auth** stays off on the server mapping. Portal user authentication stays enabled.
+- **Access policy attachment.** Graphify's initial 302 redirects were caused by a Service Auth policy that was not attached to the Access application for the upstream hostname.
+
+If health succeeds but Graphify `/mcp` returns 401, the `Authorization` bearer header is missing or wrong.
+
+## Acceptance checks
+
+Graphify passes acceptance when all of these hold:
+
+- [ ] 12 tools are discovered.
+- [ ] 20 graphs are ready at this baseline.
+- [ ] No stale or refresh-failure flags are set.
+- [ ] A valid bearer token is accepted and an invalid one is denied.
+- [ ] Source-path arguments and extra arguments are rejected.
+- [ ] `get_project_provenance` shows the expected scope and the source and build evidence.
+
+Inspect the provenance result. A healthy container does not prove that the sources are current.
+
+The remaining scheduled source-change, reboot and restore tests are tracked in `OPERATIONS.md`.
+
+## Merge documentation without deploying
+
+Dokploy Auto Deploy is enabled for Graphify on `feature/dokploy-container`, on push, with no watch paths. A documentation-only push therefore triggers a deployment unless you prevent it. Follow these steps in order.
+
+1. **Inspect and record.** Inspect the pull request's head and base SHAs and confirm that only the intended Markdown changed. Record the current container ID, image, start time, health, deployment history and Auto Deploy setting.
+2. **Turn Auto Deploy off.** In the Graphify Dokploy service, turn Auto Deploy off and save. Read the setting back before merging. Do not disable another service and do not stop the container.
+3. **Merge.** Mark the reviewed pull request ready and merge it with an expected-head SHA check, so that exactly the reviewed content is merged.
+4. **Confirm no deployment was queued.** Confirm that the webhook was handled without enqueueing a deployment. Check deployment records and queued jobs, not only container health. If delivery is still pending, keep Auto Deploy off until it resolves.
+5. **Restore Auto Deploy.** Only after step 4, restore Auto Deploy to its previous value. Confirm the same container ID and start time and no new deployment. Later code pushes keep their original behavior.
+6. **Verify the service.** Verify internal health, all expected MCP tools, the approved graph counts and provenance, and the results of both timers and services.
+
+A documentation merge does not require updating the running image or the host checkout.
+
+### About the skip marker
+
+The installed Dokploy v0.30.8 GitHub integration was inspected. It queries `autoDeploy=true` before enqueueing pushes and recognizes `[skip ci]` in the commit message.
+
+A merge message that contains that marker is an additional safeguard for this inspected handler. It does not replace turning Auto Deploy off, because other webhook handlers and versions may behave differently.
+
+Use the Dokploy dashboard or API to change the setting. Direct database changes are not a setup step.

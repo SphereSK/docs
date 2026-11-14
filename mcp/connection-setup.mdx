@@ -1,0 +1,339 @@
+---
+title: "Connect an MCP server to ChatGPT"
+sidebarTitle: "Connection setup"
+description: "Generic checklist for exposing an already deployed MCP server through Dokploy, Traefik, Cloudflare Tunnel, Cloudflare Access and an MCP Portal."
+keywords: ["MCP", "ChatGPT", "Cloudflare", "Dokploy", "Traefik", "tunnel", "Access", "portal"]
+---
+
+## Scope
+
+Use this page when an MCP server is already deployed on the Datament server with Dokploy and you need to make it usable from ChatGPT. It covers Traefik, Cloudflare Tunnel, Cloudflare Access and the Cloudflare MCP Portal.
+
+This page is a template. All names, hostnames and ports are placeholders. Verified values for the existing Graphify deployment are on [Graphify reference](/mcp/graphify-reference). Dated records of past changes are on [Changelog](/mcp/changelog).
+
+<Warning>
+  Rules that apply to every step:
+
+  - Do not replay these steps against a server that already works. Implement only the missing layers.
+  - Do not replace existing production routes with the examples.
+  - Do not broaden project approvals as part of connecting a client.
+  - Keep every secret out of Git, URLs and logs. This page says where secrets are stored, never their values.
+</Warning>
+
+## Terms
+
+| Term | Meaning on this page |
+| --- | --- |
+| Upstream | Your MCP server, reached at its own Access-protected hostname |
+| Portal | The Cloudflare MCP Portal that ChatGPT connects to. Cloudflare hosts it |
+| Connector | The `cloudflared` process on your server that links the tunnel to Cloudflare |
+| Cloudflare Gateway routing | An optional Cloudflare traffic-inspection feature. It is not the Graphify gateway service |
+
+Request path:
+
+```text
+ChatGPT -> Cloudflare MCP Portal -> Access-protected upstream -> Cloudflare Tunnel -> Traefik -> MCP container
+```
+
+The upstream and portal hostnames have different roles. Do not route the portal hostname back to your MCP container.
+
+## 1. Choose the names and port
+
+Replace these examples with your actual values.
+
+| Setting | Example | Where it is used |
+| --- | --- | --- |
+| Docker service name | `new-mcp` | Compose and Traefik |
+| Internal application port | `8000` | MCP process and Traefik backend |
+| Shared Docker network | `dokploy-network` | MCP, Traefik, containerized cloudflared |
+| Upstream hostname | `new-mcp.datament.sk` | Tunnel, Access, MCP server registration |
+| Portal hostname | `new-ai.datament.sk` | Cloudflare MCP Portal and ChatGPT |
+| MCP path | `/mcp` | Upstream and portal connection URLs |
+
+## 2. Dokploy: connect the MCP container to Traefik
+
+Merge the following network settings into your existing Compose file. Keep your existing image or build, environment, volumes and health check.
+
+```yaml
+services:
+  new-mcp:
+    # Keep your existing configuration here.
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
+```
+
+If the application also needs its existing default network, keep that network on the service.
+
+Configure the port with the environment variable your application actually reads. Setting `PORT` alone has no effect unless the code reads it.
+
+A published host port is unnecessary when Traefik reaches the application through the shared Docker network.
+
+- [ ] The application listens on `0.0.0.0:8000` inside its container.
+- [ ] Traefik and the application share `dokploy-network`.
+- [ ] The Docker service name is unique on the shared network.
+- [ ] The application is healthy after redeployment.
+
+Check the networks:
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Networks}}'
+```
+
+Expected: the MCP container and the Traefik container both list `dokploy-network`.
+
+## 3. Traefik: add the upstream hostname
+
+Prefer Dokploy Domains for a Compose-managed route. Select the actual service, the HTTP internal port and the upstream hostname, and route the whole hostname (path `/`) so that requests to `/mcp` reach the application unchanged. Do not strip the path or the protocol and authentication headers. Do not add a duplicate router if Dokploy already manages one.
+
+Only when the existing deployment uses manually managed dynamic configuration, merge this template into that configuration:
+
+```yaml
+http:
+  routers:
+    new-mcp:
+      rule: Host(`new-mcp.datament.sk`)
+      entryPoints:
+        - websecure
+      service: new-mcp
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    new-mcp:
+      loadBalancer:
+        servers:
+          - url: http://new-mcp:8000
+        passHostHeader: true
+```
+
+Use the certificate resolver and entry point names already configured in your Traefik instance.
+
+Use the Docker service name in the backend URL. Avoid hard-coded container IP addresses, because they can change after redeployment.
+
+- [ ] The backend URL uses the Docker service name and internal port.
+- [ ] Existing routers and services remain in place.
+- [ ] Traefik has a valid certificate for the upstream hostname. Step 4 requires that DNS for this hostname points only to the tunnel, so confirm that your certificate resolver can still issue and renew the certificate in that setup.
+- [ ] If the MCP framework validates Host headers, its allowed hosts include the upstream hostname.
+
+## 4. Cloudflare Tunnel: route the upstream hostname
+
+Reuse your existing healthy tunnel if possible.
+
+In the Cloudflare tunnel configuration, add a published application route:
+
+| Field | Value |
+| --- | --- |
+| Public hostname | `new-mcp.datament.sk` |
+| Service type | HTTPS |
+| Service URL | `https://dokploy-traefik:443` |
+| HTTP Host Header | `new-mcp.datament.sk` |
+| Origin Server Name | `new-mcp.datament.sk` |
+| No TLS Verify | Off |
+
+This service URL assumes cloudflared runs in Docker on the same network as Traefik. If cloudflared runs on the Linux host, use the reachable host address for Traefik, such as `https://127.0.0.1:443`, and only if Traefik publishes port 443 there.
+
+- [ ] cloudflared can reach Traefik.
+- [ ] The DNS record for the hostname points to the tunnel.
+- [ ] There is no conflicting direct-to-server DNS record for the same hostname.
+- [ ] Origin TLS validation succeeds.
+
+If you need a new tunnel, create it in Cloudflare and deploy its connector with the installation command from the dashboard. Store the tunnel token securely in your deployment configuration.
+
+You do not install a cloudflared client on ChatGPT. The connector runs on your server.
+
+## 5. Cloudflare Access: protect the upstream
+
+Create an Access service token under **Access → Service credentials → Service tokens**. Save the Client ID and Client Secret securely.
+
+Then create a self-hosted Access application for the exact upstream hostname:
+
+```text
+new-mcp.datament.sk
+```
+
+Add this policy:
+
+| Setting | Value |
+| --- | --- |
+| Action | Service Auth |
+| Include selector | Service Token |
+| Selected token | The token created for this MCP upstream |
+
+<Warning>
+  Attach the Service Auth policy to the self-hosted Access application for the exact upstream hostname, then save it. Creating the token or the policy alone is not enough. A missing attachment returns redirects to a Cloudflare login page instead of MCP responses.
+</Warning>
+
+A separate Allow policy can grant browser access to specific users if needed.
+
+### Credentials used in this setup
+
+| Credential | Purpose | Stored where |
+| --- | --- | --- |
+| Tunnel token | Connects cloudflared to Cloudflare | Server deployment |
+| Access Client ID and Secret | Authorize portal requests to the upstream | Custom headers of the MCP server entry in Cloudflare |
+| Application token, if your server requires one | Authenticates `/mcp` at your application after Access succeeds | Private Dokploy environment and protected portal upstream headers |
+| OAuth credentials and tokens | Authenticate ChatGPT users to the portal | OAuth registration and login flow |
+
+The Access service token is different from the tunnel token. Rotate each credential separately.
+
+### Confirm the origin cannot be reached around Access
+
+Access only protects requests that arrive through Cloudflare. A request sent to the server's public IP address with a matching Host header must not reach the application.
+
+Protect the origin with one of these:
+
+- Connector-only reachability: Traefik accepts this hostname only from the tunnel connector, not from the public internet.
+- Origin verification of the Access JWT: the origin validates the token signature and audience.
+
+Checking only that an Access header is present is not protection, because any client can send that header.
+
+Test from a machine outside the server:
+
+```bash
+curl -sk --max-time 10 -o /dev/null -w '%{http_code}\n' \
+  --resolve new-mcp.datament.sk:443:<server-public-ip> \
+  https://new-mcp.datament.sk/mcp
+```
+
+Expected: a connection failure or timeout (`000`), or a denial from the origin's own Access verification. Any response produced by the application means the origin can be reached around Access.
+
+## 6. Cloudflare MCP: register the upstream server
+
+In **MCP Portals → MCP servers**, add the existing server:
+
+| Field | Value |
+| --- | --- |
+| Name | A recognizable name for your MCP server |
+| Transport | HTTP or Streamable HTTP, as supported by your server |
+| Server URL | `https://new-mcp.datament.sk/mcp` |
+| Custom header `CF-Access-Client-Id` | Access service token Client ID |
+| Custom header `CF-Access-Client-Secret` | Access service token Client Secret |
+| Custom header `Authorization` | Only if your server requires its own token: `Bearer <application-token>` |
+
+Use raw values for the two `CF-Access-*` headers, with no prefix. An application `Authorization` header does need the `Bearer ` prefix.
+
+For an API-managed registration, Cloudflare supports `auth_type: "bearer"` with `auth_credentials` containing a JSON-encoded `headers` object. Example with placeholders only:
+
+```json
+{
+  "auth_type": "bearer",
+  "auth_credentials": "{\"headers\":{\"CF-Access-Client-Id\":\"<client-id>\",\"CF-Access-Client-Secret\":\"<client-secret>\",\"Authorization\":\"Bearer <application-token>\"}}"
+}
+```
+
+Use this only in the documented API field or in a dashboard editor that explicitly supports several headers. Do not paste the JSON into a plain token field. See the [Cloudflare MCP portals reference](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/).
+
+Configure the user access policy for the server entry so that the intended users can reach it through the portal.
+
+When the upstream is authorized through service-token headers that an administrator supplies, per-user authentication at the upstream is unnecessary. Keep **Require user auth** off on the server mapping. Portal user authentication stays enabled. An upstream that needs personal OAuth grants requires a different configuration.
+
+- [ ] Save and synchronize the server.
+- [ ] Confirm it reports Ready.
+- [ ] Confirm its tools are discovered.
+
+## 7. Cloudflare MCP Portal: enable user login
+
+Either add the server to your existing portal or create a separate portal.
+
+For a new portal:
+
+1. Choose the portal hostname, for example `new-ai.datament.sk`.
+2. Add the registered MCP server and the intended tools.
+3. Configure an Allow policy for the intended users.
+4. Enable Managed OAuth.
+5. Add ChatGPT's exact OAuth callback URL to the allowed redirect URLs. ChatGPT shows this URL while you create the connection in step 8, so start step 8, copy the URL, add it here, then finish step 8.
+6. Leave Cloudflare Gateway routing and code mode disabled during initial validation.
+
+Cloudflare manages the portal hostname. Do not add it as a tunnel route or a Traefik route to the upstream server.
+
+Cloudflare Gateway routing is optional traffic inspection and policy enforcement. The MCP connection works without it.
+
+## 8. ChatGPT: create the custom MCP connection
+
+In the current Plugins experience, choose **Plugins → + → Add custom MCP server**, enter the name and endpoint, configure authentication, acknowledge the risk warning and create the plugin. Developer Mode is not a prerequisite in that experience. Legacy workspaces may still show **Apps → Create → Scan Tools**. Availability depends on account and workspace permissions. See the [official connection guide](https://developers.openai.com/plugins/deploy/connect-chatgpt).
+
+| Field | Value |
+| --- | --- |
+| Name | Your MCP connection name |
+| MCP server URL | `https://new-ai.datament.sk/mcp`, or the exact endpoint shown by your portal |
+| Authentication | OAuth |
+| Client registration | Dynamic Client Registration (DCR), if advertised |
+| Client ID and Secret | Leave empty when using DCR |
+| Scopes | Use the advertised or required scopes. Do not invent values |
+
+Use the portal URL, not the Access-protected upstream URL.
+
+Before saving, check OAuth discovery:
+
+- [ ] Authorization URL is populated.
+- [ ] Token URL is populated.
+- [ ] Registration URL is populated if you use DCR.
+- [ ] The portal permits ChatGPT's exact OAuth callback URL.
+
+If DCR is not advertised, use a properly registered OAuth client and its credentials. Access service-token credentials are not OAuth client credentials.
+
+Finish the browser login and consent flow. Select the connection in a chat and request a real tool operation.
+
+If you added the server to an existing portal connection and the new tools do not appear, refresh its tools or reconnect.
+
+## 9. Verify each layer
+
+Work from the container outward. Stop at the first failure and fix that layer.
+
+- [ ] The MCP container is running and healthy.
+- [ ] The MCP container and Traefik share the required network (command in step 2).
+- [ ] Traefik routes the upstream hostname to the correct service and port.
+- [ ] The Cloudflare tunnel is healthy.
+- [ ] Access accepts the service token (command below).
+- [ ] The origin cannot be reached around Access (command in step 5).
+- [ ] The registered MCP server synchronizes and lists its tools.
+- [ ] The portal permits the intended user.
+- [ ] ChatGPT completes OAuth login.
+- [ ] A tool call succeeds in ChatGPT.
+
+Check that Access accepts the service token. Read the values from your secret store into environment variables first. Replace `<health-path>` with your application's health route.
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' \
+  -H "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+  -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
+  https://new-mcp.datament.sk/<health-path>
+```
+
+Expected: the application's own status code, normally `200`. A `302` or `403` from Cloudflare means Access rejected the request.
+
+A successful health request proves application health at that route. It does not prove that OAuth or an MCP tool call works.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| 504 timeout | Shared Docker network, Traefik backend address and port, tunnel origin reachability |
+| 502 error | Backend process, protocol mismatch, origin TLS settings |
+| Server synchronization receives a Cloudflare login page instead of an MCP response | Service Auth policy attached to the correct upstream application, the selected token, and both Access headers |
+| Health succeeds but `/mcp` returns 401 | Missing or wrong application `Authorization` bearer header |
+| "Failed to get information" during synchronization | MCP URL, server logs, authentication headers, protocol handshake |
+| Browser GET to `/mcp` returns 406 requiring `text/event-stream` | A normal browser request lacks the expected Accept header. This alone does not mean MCP is broken |
+| DCR fails | Discovered Registration URL and portal OAuth configuration |
+| OAuth login fails | Exact allowed callback URL and user access policy |
+| Connected, but tools are missing | Portal tool selection, server synchronization, ChatGPT tool refresh |
+| Works until redeployment | Replace hard-coded container IPs with the Docker service name |
+
+## Maintenance
+
+- Record credential owners and expiry dates. Rotate Access tokens and application tokens separately, and update every protected consumer of a token in the same change.
+- Review portal users and tools whenever you add a server.
+- Keep rollback route and credential references and the previous image revision in a private place.
+- Recheck the current Cloudflare and OpenAI documentation before you apply this page to another deployment.
+
+## Reference documentation
+
+- [Cloudflare Tunnel setup](https://developers.cloudflare.com/tunnel/get-started/)
+- [Cloudflare Tunnel origin parameters](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/origin-parameters/)
+- [Cloudflare MCP portals](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/)
+- [Cloudflare Managed OAuth](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/managed-oauth/)
+- [OpenAI authentication documentation](https://developers.openai.com/apps-sdk/build/auth/)
