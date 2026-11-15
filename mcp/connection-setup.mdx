@@ -9,7 +9,7 @@ keywords: ["MCP", "ChatGPT", "Cloudflare", "Dokploy", "Traefik", "tunnel", "Acce
 
 Use this page when an MCP server is already deployed on the Datament server with Dokploy and you need to make it usable from ChatGPT. It covers Traefik, Cloudflare Tunnel, Cloudflare Access and the Cloudflare MCP Portal.
 
-This page is a template. All names, hostnames and ports are placeholders. Verified values for the existing Graphify deployment are on [Graphify reference](/mcp/graphify-reference). Dated records of past changes are on [Changelog](/mcp/changelog).
+This is the standard operator runbook for onboarding **future MCP servers** to the existing Datament infrastructure. The generic examples are placeholders; the table and worked MemPalace example below record actual verified settings. Verified Graphify details are on [Graphify reference](/mcp/graphify-reference), MemPalace-specific settings are on [MemPalace reference](/mcp/mempalace-reference), and dated changes are on [Changelog](/mcp/changelog).
 
 <Warning>
   Rules that apply to every step:
@@ -37,7 +37,212 @@ ChatGPT -> Cloudflare MCP Portal -> Access-protected upstream -> Cloudflare Tunn
 
 The upstream and portal hostnames have different roles. Do not route the portal hostname back to your MCP container.
 
-## 1. Choose the names and port
+## Standard Datament onboarding: exact operator sequence
+
+Use this **token-first workflow** for each new MCP server. The later numbered sections are implementation references for Docker, Traefik, Cloudflare, and the ChatGPT client. Record completion and exact verification evidence for each new server; do not assume that a working server needs another tunnel or portal.
+
+### Existing components to reuse
+
+| Existing component | Datament baseline | What to add for each new MCP |
+| --- | --- | --- |
+| Cloudflare DNS zone | datament.sk | One new subdomain such as `example.datament.sk` |
+| Cloudflare Tunnel | Existing working connector | One published application route |
+| Dokploy and Traefik | Existing Docker routing infrastructure | One service/domain router |
+| Cloudflare Access | Existing Zero Trust account, policies and identity providers | One scoped service token and a policy attached to the correct upstream Access app |
+| MCP Portal | `https://mcp-server.datament.sk/mcp` | One upstream MCP server entry; use existing portal URL for clients |
+| Caddy/host bridge | Verified for MemPalace, **not a universal dependency** | Only where host-loopback to Docker networking, path filtering or app Bearer requires it |
+| Backup/logging | Existing infrastructure-dependent tooling | New application health, logs, backup, rollback and least-privilege checks |
+
+For a fully worked host-loopback example, see [MemPalace reference](/mcp/mempalace-reference). Its verified upstream domain is `mempalace.datament.sk`, Caddy bridge target `http://172.18.0.1:18086`, and internal PM2 MCP listener `127.0.0.1:8006`. **Do not reuse these ports blindly** for a different service.
+
+<Steps>
+  <Step title="1. Create a dedicated Cloudflare Access service token">
+    In the **Cloudflare dashboard → Zero Trust → Access controls → Service credentials → Service Tokens**, select **Create Service Token**.
+
+    - Use a descriptive name, such as `datament-example-mcp-upstream`; prefer a separate token per new upstream to contain the impact of revocation.
+    - Choose an explicit lifetime and record its expiration and owner. Avoid a non-expiring token unless a reviewed exception requires it.
+    - Select **Generate token** and copy the **Client ID** and **Client Secret** into an approved secret store immediately. The secret may not be displayed again.
+    - Never confuse this service-token pair with the Cloudflare Tunnel connector token, a Cloudflare API token, an upstream application Bearer token, or the OAuth credentials used by ChatGPT.
+
+    **Gate:** the token is enabled, its owner and expiry are recorded, and both values are stored privately. [Cloudflare service-token guide](https://developers.cloudflare.com/cloudflare-one/access-controls/service-credentials/service-tokens/).
+  </Step>
+
+  <Step title="2. Create the Access Service Auth policy">
+    Go to **Zero Trust → Access controls → Policies → Add a policy**.
+
+    | Field | Set to |
+    | --- | --- |
+    | Policy name | `example-mcp-service-auth` |
+    | Action | **Service Auth** |
+    | Include rule selector | **Service Token** |
+    | Include value | The exact token created in Step 1 |
+    | Exclude/Require | Apply extra restrictions only when the required source identities/IPs are grounded and tested |
+
+    Select **Save**. A reusable policy existing in the policy list does **not** imply that any application uses it.
+
+    **Gate:** inspect the policy and verify that its Include rule selects the intended token, not `Everyone` or `Any Access Service Token`. [Cloudflare policy management](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/policy-management/).
+  </Step>
+
+  <Step title="3. Attach that policy to the upstream Access application">
+    Go to **Zero Trust → Access controls → Applications**. Find the existing self-hosted application for **exactly** `example.datament.sk`, or create a self-hosted application with that public hostname.
+
+    - Open the application's **Policies** / **Access policies** section.
+    - Add the existing `example-mcp-service-auth` policy and **save the application**.
+    - If you need human browser access, keep a **separate narrowly scoped Allow policy** for the intended users. Do not use a Bypass/Everyone policy to make MCP synchronization pass.
+    - Verify hostname/path coverage and that no overlapping Access application unintentionally changes which policy is evaluated.
+
+    **Gate:** the upstream application shows **Service Auth → Include → exact service token** in its assigned policies. This assignment was the missing step in the MemPalace incident; the public endpoint redirected to Cloudflare login (HTTP 302) until the token was included in the correct application policy.
+
+    The Access application should be protected **before** making a new tunnel hostname publicly reachable. [Cloudflare self-hosted application](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/self-hosted-public-app/).
+  </Step>
+
+  <Step title="4. Inventory, deploy and secure the new MCP runtime">
+    Determine whether the MCP runs in a Docker container, on the Linux host under PM2/systemd, or in an existing proxy. Record: process name, package/version, working directory, listener, MCP path, transport, storage, service owner and health check.
+
+    - Verify a real MCP `initialize` POST, not just a browser GET or TCP connection.
+    - Discover `tools/list` and classify read, write, delete, shell, network and administrative tools.
+    - Enforce required tool authorization on the **server side**, together with any per-project or per-tenant content permissions.
+    - Keep production storage and existing local clients unchanged. Back up authoritative state before modifying existing services.
+
+    **Gate:** the internal MCP endpoint works, the intended tool permissions are tested, and rollback is possible.
+  </Step>
+
+  <Step title="5. Create the Dokploy/Traefik target for the new hostname">
+    Select one routing pattern:
+
+    **Docker-networked MCP:** attach the application and Traefik to the appropriate shared Docker network. Route the hostname to the Docker service name and internal HTTP port, for example `http://example-mcp:8000`. Do not depend on ephemeral container IP addresses.
+
+    **Host-loopback MCP:** a process on `127.0.0.1:PORT` cannot be reached via the Docker bridge gateway at `172.18.0.1:PORT` without a separate listener. Use a dedicated, narrowly scoped bridge like the verified Caddy service for MemPalace. Give each bridge a **unique port and domain**; do not expose all tools/paths on the shared PM2 proxy.
+
+    - Configure the **domain** as `example.datament.sk`.
+    - Configure the **Traefik target** as the private **host or service root URL**, such as `http://172.18.0.1:UNIQUE_BRIDGE_PORT`. Do not append the MCP resource path to that target.
+    - Leave the incoming MCP path untouched, and do not strip MCP protocol/session headers.
+    - Retain existing Dokploy routers, networks, health checks and services.
+
+    **Gate:** an unauthenticated local request to the MCP resource reaches the intended application (possibly receiving its own `401`). Unrelated MCP paths remain inaccessible.
+  </Step>
+
+  <Step title="6. Add the hostname to the existing Cloudflare Tunnel">
+    In **Zero Trust → Networks → Tunnels** (navigation labels may vary), open the **existing** healthy connector, then add a **Published application route** for `example.datament.sk` pointing at the already-working Traefik origin. Use its current HTTP/HTTPS origin configuration, Host header and TLS settings; do not assume every connector shares the same Docker network.
+
+    Confirm Cloudflare DNS routes the proxied hostname through the tunnel. Avoid creating a duplicate direct-to-origin DNS record or unnecessary additional tunnel.
+
+    **Gate:** the hostname routes to the correct backend; access from the public internet is blocked by the Access application without valid credentials. Verify that the origin's public IP cannot bypass Access.
+  </Step>
+
+  <Step title="7. Add optional application-level Bearer authentication">
+    If the MCP application already enforces authentication, preserve and validate it. Where a bridge is used, a dedicated application Bearer token is an extra layer, not a substitute for Cloudflare Service Auth.
+
+    - Generate a strong random token when needed, for example `openssl rand -hex 32`.
+    - Store it in a private secret store / **Dokploy Environment**, not in the Caddyfile, Compose YAML, GitHub, or the MCP URL.
+    - When referencing a Dokploy-managed value in Compose, use `environment:` interpolation rather than an absolute `env_file` that the Dokploy builder may not be able to access.
+    - Filter the new MCP route exactly. A Caddy path matcher is **not** a per-tool read-only authorization system.
+    - Keep tokens out of request logs, session logs and error responses.
+
+    **Gate:** missing/incorrect application Bearer returns the application's `401`; valid credentials permit only the intended MCP path.
+  </Step>
+
+  <Step title="8. Test Cloudflare Access and application authentication separately">
+    Run tests in this order:
+
+    1. **Local upstream:** verify MCP `initialize` against the local target.
+    2. **Public hostname without credentials:** the request must not initialize MCP; depending on Access settings, expect login redirect `302` or rejection `401/403`.
+    3. **Access service token only:** send `CF-Access-Client-Id` and `CF-Access-Client-Secret`. If the application also requires Bearer, expect its own `401`, **not** a Cloudflare login redirect.
+    4. **Access token plus application Bearer (if applicable):** send all required headers; POST a valid MCP initialize body. Expect `HTTP 200` with a JSON-RPC initialize result.
+    5. **Unauthorized route:** ensure another service/path remains inaccessible.
+    6. **Origin bypass:** verify that the hostname with a direct public-origin IP cannot reach the application around Access.
+
+    Do not follow redirects blindly while diagnosing Access: an HTTP `302` to the Access login page tells you the Service Auth request was not authorized.
+
+    Example initialization JSON for a Streamable HTTP endpoint:
+
+    ~~~json
+    {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"datament-onboarding-test","version":"1.0"}}}
+    ~~~
+
+    Set `Content-Type: application/json` and `Accept: application/json, text/event-stream`. For an SSE-only upstream, follow its documented SSE transport instead.
+
+    **Gate:** a working public MCP initialize returns 200, while missing credentials and unrelated routes are refused.
+  </Step>
+
+  <Step title="9. Register the upstream in Cloudflare MCP Portals">
+    Navigate to **Zero Trust → Access controls → MCP Portals → MCP servers → Add MCP server**.
+
+    | Field | Example |
+    | --- | --- |
+    | Name | `example` |
+    | HTTP URL | `https://example.datament.sk/mcp`, or the exact service-specific MCP path |
+    | Transport | URL ending in `/mcp` uses Streamable HTTP; `/sse` selects legacy SSE |
+    | Authentication | **Bearer/custom upstream headers** for static service credentials |
+    | Access policies | Narrow user access, distinct from the upstream Service Auth policy |
+
+    When Cloudflare must send **both** Access service-token headers and a separate application Bearer, configure custom headers rather than supplying only a raw Bearer value:
+
+    ~~~json
+    {
+      "headers": {
+        "CF-Access-Client-Id": "<ACCESS_CLIENT_ID>",
+        "CF-Access-Client-Secret": "<ACCESS_CLIENT_SECRET>",
+        "Authorization": "Bearer <APPLICATION_TOKEN>"
+      }
+    }
+    ~~~
+
+    This JSON is a **decoded example for a custom-headers field**. When using the Cloudflare API, `auth_type` is `bearer` and `auth_credentials` must contain a **JSON-encoded string**, not this object as a raw top-level field. A plain Bearer-token field accepts only a token value. For servers without an application Bearer, omit the Authorization entry.
+
+    Synchronize capabilities. A status of `Ready` confirms discovery, **not** a successful future tool call. [Cloudflare MCP portals](https://developers.cloudflare.com/cloudflare-one/access-controls/ai-controls/mcp-portals/).
+
+    **Gate:** upstream synchronization succeeds and the tools shown match the verified, approved tool registry.
+  </Step>
+
+  <Step title="10. Add the server to the existing Datament MCP Portal">
+    Edit the existing portal at **https://mcp-server.datament.sk/mcp** rather than creating an unrelated portal for each MCP server.
+
+    - Add the registered upstream and save it.
+    - Set **Require user auth = Off** for a server using administrator-configured static upstream credentials (no per-user OAuth grant). Keep authentication and access policy for the **portal itself** enabled.
+    - Select which tools and prompts authorized portal users may see. A tool toggle is useful at the portal layer but must not replace server-side tool authorization.
+    - If the client is an **automated service-token client rather than an interactive OAuth user**, the **portal Access application** also needs a matching Service Auth policy; Cloudflare may also check the service-token policy on the linked server Access application. This is **separate** from the service token that the portal itself uses to reach your protected upstream.
+    - Initially leave unreviewed or write-capable servers unavailable to clients.
+
+    **Gate:** the correct server and only approved tools are assigned; the portal's user authentication remains active.
+  </Step>
+
+  <Step title="11. Connect or refresh the MCP client">
+    For ChatGPT, connect to **the portal URL** (`https://mcp-server.datament.sk/mcp`) using the supported OAuth integration, **not** the new upstream hostname. If the Datament portal is already connected, refresh its tools/connection and enable the approved server. Claude and Codex clients may reuse their current working portal integration where applicable.
+
+    Verify OAuth discovery, callback registration, successful login, tool listing and one harmless read call. Do not pass Cloudflare Access service-token secrets to the end user's browser or embed them in the ChatGPT configuration.
+
+    **Gate:** the intended client performs a real MCP read operation and unauthorized users cannot discover or invoke the server.
+  </Step>
+
+  <Step title="12. Record acceptance, rollback and credential ownership">
+    Capture the service name, owner, hostname, MCP path, Docker project or PM2 service, internal target, transport, image/version, health endpoint, Access application, assigned policy name, token expiry (never token values), Portal server ID, allowed tool list, log location, backup method, and tested rollback.
+
+    Confirm: logs redact credentials and MCP session IDs; monitoring detects restarts and failures; token rotation is scheduled; source storage can be restored; local services still work.
+
+    **Gate:** save a dated result in the server-specific reference and [Changelog](/mcp/changelog). Only then enable production client access.
+  </Step>
+</Steps>
+
+### MemPalace worked example, 15 November 2026
+
+| Stage | Actual result |
+| --- | --- |
+| Service token and policy | MemPalace service credentials were created, but the policy initially omitted them; adding the token fixed HTTP 302 |
+| Access application | `mempalace.datament.sk` protected by Access Service Auth |
+| Docker/Traefik | `mempalace-bridge`; existing Dokploy Compose project; Traefik target `http://172.18.0.1:18086` |
+| Local MCP | Existing PM2 `mcp-proxy` on `127.0.0.1:8006`; actual MCP path `/servers/mempalace/mcp` |
+| Application Bearer | Caddy checked `Authorization: Bearer ...`; missing token 401, correct token accepted |
+| Health and route isolation | `127.0.0.1:18087/healthz` returned 200, Docker healthy, unrelated MCP paths 404 |
+| Public Access and MCP | Direct public HTTP initialize with all three authentication headers returned 200 |
+| Remaining gates | Cloudflare MCP Portal sync and client call **not yet verified**; remote read-only tool enforcement, privacy scope and restore test **not completed** |
+
+The complete MemPalace deployment history, version details, 47-tool inventory, hardened Caddy image, failures and fixes, and planned security gates remain in [MemPalace reference](/mcp/mempalace-reference).
+
+---
+
+
+## Implementation reference: 1. Choose the names and port
 
 Replace these examples with your actual values.
 
