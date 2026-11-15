@@ -1,126 +1,396 @@
 ---
 title: "MemPalace MCP reference"
 sidebarTitle: "MemPalace reference"
-description: "MemPalace architecture, security and operations baseline for Datament, with verified observations, integration gaps, and safe deployment checks."
+description: "Verified Datament MemPalace MCP deployment, Cloudflare authentication, Dokploy bridge, operating procedures, and remaining security acceptance steps."
 keywords:
   - "MemPalace"
   - "MCP"
-  - "memory"
+  - "Cloudflare Access"
+  - "Dokploy"
   - "read-only"
   - "operations"
 ---
 
-MemPalace provides persistent memory and recall for AI agents. This reference separates the reported local Datament installation from the upstream MemPalace capabilities and the not-yet-verified Cloudflare MCP integration. It does not expose memory records, credentials or private infrastructure configuration.
-
-## Evidence and current status
-
-Evidence checked on **15 November 2026 (Europe/Bratislava)**:
-
-| Area | Status | Evidence and limitation |
-| --- | --- | --- |
-| Local installation | **Reported, not independently checked in this documentation session** | The previous operator handoff described a populated local palace, local MemPalace CLI, an existing PM2 MCP proxy and refresh jobs. No server shell or authenticated local MemPalace status output was available to this review. |
-| MemPalace HTTP MCP implementation | **Supported upstream; local runtime unverified** | The [upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md) documents `mempalace serve`, HTTP transport, bearer-token authentication, `--read-only` and health endpoints. The installed version and flags have not been read from this server. |
-| Datament MCP Portal | **MemPalace not registered in the visible server list** | A read-only portal listing returned Ghost, Graphify and Logiscool, but no MemPalace server. No live MemPalace tool discovery or client call was possible through this portal. |
-| Source and deployment record | **Not established** | No Datament-specific MemPalace implementation repository, pinned commit, service definition, image digest or deployment record was verified. The upstream project is not proof of the installed revision. |
-| Backup and restore | **Not verified** | No backup manifest, recent successful restore test, storage-backend inventory or recovery point was inspected. |
+This internal operations reference records the **working remote MemPalace MCP transport as of 15 November 2026**, the exact troubleshooting history, and the remaining acceptance gates. It replaces the earlier assumption that the Cloudflare route was only proposed. **The route and end-to-end MCP handshake are verified; Cloudflare MCP Portal tool discovery, server-enforced read-only access, storage backup restoration and final ChatGPT client access are not yet verified.**
 
 <Warning>
-  Do not treat the local installation report as proof that a network-facing MCP endpoint, Cloudflare routing, read-only policy or backup recovery is operational. No MemPalace installation, service, memory record, schedule or routing setting was changed for this documentation update.
+  The GitHub documentation repository and its pull requests may be publicly readable. Never paste service-token values, the Bearer token, credentials, session IDs, raw palace content, unredacted request logs or private environment files into documentation. Review infrastructure details before merging this draft.
 </Warning>
 
-## Architecture and data ownership
+## Deployment status and evidence
 
-The intended design keeps **one authoritative palace** for agent recall. Existing local mining or synchronization processes populate it; MCP clients read from that same data source without creating a competing writer or a second independent memory database.
-
-The earlier handoff described a local palace, a PM2 MCP proxy and scheduled refresh scripts. Their current ownership, request path and storage backend need a fresh local inventory. In particular, a running proxy does **not** establish that the upstream HTTP MCP server is running or exposed.
-
-The **proposed** remote path is:
-
-```text
-ChatGPT / other approved MCP clients
-  -> Cloudflare MCP Portal (user login and approved tools)
-  -> Cloudflare Access-protected upstream
-  -> existing tunnel / reverse proxy
-  -> MemPalace HTTP MCP server (read-only)
-  -> existing authoritative palace
-```
-
-This is a design target, **not a verified request path**. Use [Connection setup](/mcp/connection-setup) for reusable Cloudflare, tunnel, OAuth and client-connection steps. Do not create a second tunnel, replace working routes or duplicate that setup here. Graphify and MemPalace remain separate services; see [Graphify reference](/mcp/graphify-reference).
-
-## MCP tools and access policy
-
-The upstream [MCP integration guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/mcp-integration.md) documents these examples. They are **upstream tool names, not a tool list observed from the Datament portal**.
-
-| Category | Examples | Intended Datament exposure |
+| Area | Verified state | Evidence or limitation |
 | --- | --- | --- |
-| Status and taxonomy | `mempalace_status`, `mempalace_list_wings`, `mempalace_list_rooms`, `mempalace_get_taxonomy` | Read-only, subject to privacy review |
-| Recall | `mempalace_search`, `mempalace_get_drawer`, `mempalace_list_drawers` | Read-only, with approved content scope |
-| Relationships and continuity | `mempalace_kg_query`, `mempalace_kg_timeline`, `mempalace_diary_read` | Read-only only if the content is appropriate for portal clients |
-| Mutations | `mempalace_add_drawer`, `mempalace_update_drawer`, `mempalace_delete_drawer`, `mempalace_diary_write` | Do **not** expose through the initial portal integration |
+| Existing MemPalace CLI | Installed at /home/datament/.local/bin/mempalace; version **3.11.0** | Operator ran command -v and mempalace --version on the host |
+| Existing MemPalace MCP | Installed at /home/datament/.local/bin/mempalace-mcp | Operator verified executable; no new MemPalace instance was installed |
+| Memory storage | Existing palace at /home/datament/.mempalace/palace, **70,889 drawers** in the recorded status snapshot | Memory contents and backup integrity were not independently inspected |
+| Local PM2 gateway | PM2 process mcp-proxy, working directory /home/datament/project/mcp-proxy, listening **127.0.0.1:8006** | ss, pm2 describe and successful local MCP initialization |
+| MCP transport | **Streamable HTTP** at /servers/mempalace/mcp; protocol **2025-03-26** | POST initialize returned HTTP 200; MCP serverInfo reported **1.27.2**, which is distinct from MemPalace CLI 3.11.0 |
+| MCP tools | **47 tools** observed by tools/list on the local proxy | Tool discovery does not establish read-only behavior |
+| Dokploy bridge | Existing Compose project **ai-agents-mempalacebridge-hutugi**, container name **mempalace-bridge**, running custom Caddy image | Docker inspection and container startup logs |
+| Bridge endpoint | **172.18.0.1:18086**, Caddy bound to the Docker gateway | Authenticated MCP initialize returned 200, unauthenticated MCP returned 401 |
+| Other MCP services | Playwright and WordPress paths returned HTTP 404 at the bridge | The bridge is path-restricted to MemPalace, but not yet tool-restricted |
+| Private health | **127.0.0.1:18087/healthz**, HTTP 200, Docker state **healthy** | Separate localhost-only Caddy listener after the first /healthz matcher returned 404 |
+| Cloudflare and Traefik | **mempalace.datament.sk**, public MCP initialize returned HTTP 200 | Required Cloudflare Access service token and Caddy Bearer token together |
+| MCP Portal registration | **Not yet accepted as a working client integration** | Portal configuration, tool synchronization and read-only denial testing remain open |
+| Read-only isolation | **Not implemented** | Existing backend exposes potentially destructive tools |
+| Backup/restore | **Not verified** | No isolated successful restoration test was provided |
 
-The upstream `--read-only` mode is designed to hide and refuse mutating tools. **Before exposure, test the installed version's entire advertised tool list and try a forbidden mutation against non-sensitive test data.** Tool availability and host-side side effects can vary by version. A read-only flag does not provide per-project memory authorization by itself; never assume that one authorized client can only see its own wing.
+## Exact topology and ownership
 
-## Authentication and transport
+~~~text
+ChatGPT or another approved remote MCP client (pending enablement)
+    -> Cloudflare MCP Portal: https://mcp-server.datament.sk/mcp
+    -> Cloudflare Access Service Auth for mempalace.datament.sk
+    -> https://mempalace.datament.sk/servers/mempalace/mcp
+    -> Cloudflare Tunnel / Traefik in Dokploy
+    -> http://172.18.0.1:18086
+    -> mempalace-bridge (hardened Caddy container, Bearer required)
+    -> http://127.0.0.1:8006/servers/mempalace/mcp
+    -> existing PM2 mcp-proxy -> existing MemPalace MCP
+    -> /home/datament/.mempalace/palace
 
-For a remote integration, retain separate controls:
+Local-only health:
+    http://127.0.0.1:18087/healthz
 
-1. **Portal user authentication and tool approval** restrict who can connect to the portal.
-2. **Cloudflare Access service authentication** restricts the upstream route; configure it according to [Connection setup](/mcp/connection-setup).
-3. **MemPalace application bearer authentication** must be enforced when the HTTP service is reachable through a proxy or network. Keep credentials in the private deployment secret store and protected upstream headers, never in this repository.
-4. **MemPalace read-only restrictions** should prevent remote writes independently of the first three layers.
+Existing local consumers:
+    Claude Code uses http://127.0.0.1:8006/servers/mempalace/sse
+    Other local proxy services coexist on :8006 and must not be exposed
+~~~
 
-Do not bind a tokenless MemPalace service to a network or publish a tokenless loopback service through a proxy. Verify the exact installed release's accepted flags and host-header behavior before enabling routing. No portal-specific credentials or upstream hostname have been verified here.
+**Traefik target:** http://172.18.0.1:18086 (no MCP path appended to the target).  
+**MCP Portal upstream URL:** https://mempalace.datament.sk/servers/mempalace/mcp (include the path).  
+**Existing PM2 listener:** 127.0.0.1:8006 (do not use http://172.18.0.1:8006 as a Traefik target).  
+**Container network mode:** host, with Caddy deliberately bound to the gateway and health on localhost.  
+**Host user:** datament, UID:GID **1001:1001**.
 
-## Storage, refresh and backups
+The public domain name is **mempalace.datament.sk**, not the earlier proposed memory.datament.sk. The host gateway **172.18.0.1** is the docker_gwbridge address on this server. Binding to host 127.0.0.1 is not the same as binding to that gateway.
 
-- **Authoritative storage:** Confirm the actual palace root, storage backend, collection identity and process owner locally. These details belong in private operational inventory, not this public page.
-- **Refresh:** Preserve the working mining and synchronization jobs. The prior handoff raised a possible duplicate scheduled refresh; inspect job ownership and actual execution history before changing any schedule.
-- **Concurrency:** Avoid a second independent writer. Upstream versions implement writer-lease handling, but the installed behavior must be checked against the pinned version before enabling an always-on HTTP service.
-- **Backup scope:** Capture the authoritative palace files and any backing database using an application-consistent procedure. For Qdrant, Milvus or another external backend, use that backend's supported snapshot/backup process rather than copying an assumed local directory.
-- **Restore confidence:** Keep credentials out of archives and the public repository, store encrypted backups with controlled access, and restore into an isolated target to confirm integrity, searchable recall and correct scope before touching production.
+Keep one authoritative palace. Do not replace the local mcp-proxy, change the existing mining/sync jobs, reinitialize the palace, or expose every service on port 8006.
 
-**Pending evidence:** backup tooling, schedule, retention, last successful run, test-restore date and rollback recovery point. None is asserted to be in place.
+## Persistent project layout and Docker deployment
 
-## Deployment and verification
+The Datament-owned bridge files are organized under:
 
-Keep the existing local MemPalace workflows unchanged until the deployment inventory is complete.
+~~~text
+/home/datament/project/mempalace/
+└── bridge/
+    ├── Caddyfile
+    ├── Dockerfile
+    ├── .dockerignore
+    ├── compose.yaml                 # optional tracked copy; verify against Dokploy
+    ├── secrets/
+    │   └── bridge.env               # mode 0600; NEVER commit
+    ├── logs/
+    │   └── mempalace-access.log     # structured Caddy request metadata
+    ├── state/
+    │   ├── config/
+    │   └── data/
+    └── backup/
+        └── Caddyfile.previous
 
-1. **Inventory locally:** Record the installed MemPalace version, executable, backend, launch method, process manager, current palace status, active refresh jobs and any proxy configuration in private records. Locate the actual implementation repository and immutable revision, if applicable.
-2. **Choose one runtime:** If a dedicated HTTP service is needed, reuse the existing installation and palace. Decide between the current supervisor and a reviewed Docker/systemd deployment; do not silently add another persistent server.
-3. **Harden locally:** Start with read-only mode and application bearer authentication, a private network bind, a pinned version and a controlled service account. Do not publish an upstream until local read and denied-write tests pass.
-4. **Verify the service:** Where supported by the installed release, `GET /healthz` is a liveness check and authenticated `GET /statusz` reports server status. Verify the full MCP handshake, tool discovery and a harmless recall operation separately.
-5. **Expose through the portal:** Follow [Connection setup](/mcp/connection-setup). Confirm Access, tool synchronization, portal user login and a live read-only client call. Recheck that prohibited tools are absent or refused.
-6. **Verify operations:** Compare memory freshness with recent successful mining logs, check the refresh schedule for duplicate runs, review monitoring and alerting, and complete an isolated backup restore test.
+Old working reference during migration:
+    /opt/mempalace-bridge/Caddyfile
+Actual memory data, untouched:
+    /home/datament/.mempalace/palace
+~~~
 
-Until those checks have dated evidence, mark the portal integration **planned / unverified**, not deployed or accepted.
+The observed Dokploy Compose project label is **ai-agents-mempalacebridge-hutugi**. There must be **only one running container** named mempalace-bridge bound to port 18086. The existing raw Compose definition in Dokploy remains the active deployment source unless Dokploy has explicitly been configured to deploy from a file or Git. A local compose.yaml is documentation, not automatically the authoritative deployment definition.
+
+The deployed image was built locally as **datament/mempalace-caddy:2.10.2-rootless** from **caddy:2.10.2-alpine**, removing the unnecessary Linux file capability from /usr/bin/caddy:
+
+~~~dockerfile
+FROM caddy:2.10.2-alpine
+RUN setcap -r /usr/bin/caddy \
+    && test -z "$(getcap /usr/bin/caddy)"
+~~~
+
+A .dockerignore consisting of * and !Dockerfile keeps secrets and logs out of the build context. The original official image could not execute with the chosen least-privilege combination; the custom image succeeded without dropping those restrictions.
+
+Representative current **Dokploy raw Compose** configuration (compare it with the saved live definition before changing anything):
+
+~~~yaml
+services:
+  mempalace-bridge:
+    image: datament/mempalace-caddy:2.10.2-rootless
+    container_name: mempalace-bridge
+    restart: unless-stopped
+    network_mode: host
+    user: "1001:1001"
+    environment:
+      MEMPALACE_BRIDGE_TOKEN: ${MEMPALACE_BRIDGE_TOKEN:?Set bearer token in Dokploy Environment}
+    volumes:
+      - /home/datament/project/mempalace/bridge/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /home/datament/project/mempalace/bridge/logs:/var/log/caddy
+      - /home/datament/project/mempalace/bridge/state/config:/config
+      - /home/datament/project/mempalace/bridge/state/data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: "0.50"
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:18087/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+~~~
+
+The **Bearer token is managed in Dokploy Environment** as MEMPALACE_BRIDGE_TOKEN. A matching private copy was created at secrets/bridge.env (0600). A Compose env_file pointing to that absolute host file caused Dokploy's deployment preparation to fail; replacing it with environment interpolation in Dokploy resolved the deployment issue. The local token and the value in the running container were initially different and later synchronized.
+
+Caddy's verified security design includes: the sole remote MCP path /servers/mempalace/mcp; exact Authorization Bearer matching; removal of the bridge Authorization header before forwarding upstream; request size limit configured at 8 MB; no public health route; private health at 127.0.0.1:18087; JSON access logging with rotation and sensitive-header redaction; no Caddy admin API; no TLS termination at Caddy; an HTTP upstream to the local PM2 proxy. The **source of truth for exact current Caddy directives is the running host Caddyfile**, because its final formatted bytes were not copied into this documentation.
+
+Useful safe checks:
+
+~~~bash
+docker inspect mempalace-bridge \
+  --format 'Project: {{ index .Config.Labels "com.docker.compose.project" }}'
+docker inspect mempalace-bridge \
+  --format '{{range .Mounts}}{{println .Source "->" .Destination}}{{end}}'
+docker inspect mempalace-bridge \
+  --format 'Container: {{.State.Status}} | Health: {{.State.Health.Status}}'
+docker logs --tail 50 mempalace-bridge
+ss -ltnp | grep -E ':18086|:18087|:8006'
+~~~
+
+## Authentication: three independent controls
+
+1. **Cloudflare MCP Portal user/client authentication:** ultimately controls which approved ChatGPT or other clients may use the portal. It is separate from upstream service credentials.
+2. **Cloudflare Access on mempalace.datament.sk:** a Service Auth policy must explicitly **include the correct MemPalace service token**. Send CF-Access-Client-Id and CF-Access-Client-Secret. A valid Caddy Bearer token without these headers returned HTTP 302 to Cloudflare Access login.
+3. **Caddy application Bearer token:** send Authorization: Bearer TOKEN_VALUE. A missing or mismatched Bearer value returns Caddy JSON HTTP 401. Store the token privately in Dokploy and the protected local secrets/bridge.env.
+
+The Access credentials and Caddy Bearer credential are **different secrets**; all three request headers are required for remote upstream calls when both layers are enabled. The successful public POST initialize test returned MCP JSON with HTTP 200 only after the Access policy included the service credentials.
+
+Cloudflare MCP Portal intended upstream values:
+
+| Field | Value |
+| --- | --- |
+| Server name | mempalace |
+| Upstream URL | https://mempalace.datament.sk/servers/mempalace/mcp |
+| Transport | Streamable HTTP |
+| Upstream credentials | CF-Access-Client-Id, CF-Access-Client-Secret, Authorization: Bearer TOKEN_VALUE |
+| Require per-user upstream OAuth | Do not require if the portal uses its configured service credentials; preserve portal-side user/client authentication |
+| Enabled for remote clients | **No, until server-side read-only protection and tests pass** |
+
+Some Cloudflare UIs accept a plain Bearer value; others support custom upstream headers or an API credential object. Do not paste a JSON header map into a plain Bearer field. Verify the exact active Cloudflare field/schema and keep all secrets out of screenshots, change logs and this repository.
+
+## MCP tool inventory and remote policy
+
+A local authenticated Streamable HTTP tools/list call returned **47 names**, listed here exactly as observed:
+
+~~~text
+mempalace_status
+mempalace_list_wings
+mempalace_list_rooms
+mempalace_get_taxonomy
+mempalace_get_aaak_spec
+mempalace_kg_query
+mempalace_kg_add
+mempalace_kg_invalidate
+mempalace_kg_supersede
+mempalace_kg_timeline
+mempalace_kg_stats
+mempalace_traverse
+mempalace_find_tunnels
+mempalace_graph_stats
+mempalace_mesh_peers
+mempalace_create_tunnel
+mempalace_list_tunnels
+mempalace_delete_tunnel
+mempalace_list_hallways
+mempalace_delete_hallway
+mempalace_follow_tunnels
+mempalace_search
+mempalace_check_duplicate
+mempalace_add_drawer
+mempalace_checkpoint
+mempalace_delete_drawer
+mempalace_delete_drawers
+mempalace_mine
+mempalace_delete_by_source
+mempalace_sync
+mempalace_get_drawer
+mempalace_get_drawers
+mempalace_list_drawers
+mempalace_update_drawer
+mempalace_diary_write
+mempalace_diary_read
+mempalace_hook_settings
+mempalace_memories_filed_away
+mempalace_reconnect
+mempalace_event_append
+mempalace_task_create
+mempalace_event_list
+mempalace_event_wait
+mempalace_event_ack
+mempalace_artifact_put
+mempalace_artifact_get
+mempalace_patch_submit
+~~~
+
+This list includes dangerous mutation operations: add/update/delete drawers, delete by source, mine/sync, KG mutations, tunnel/hallway mutation, event writes and artifact updates. Even a tool name that sounds like a query may have internal side effects. **Restrict tools on the server side, not merely in the portal's visible tool list.** Do not assume that a read-only tool can only view one wing; broad search could reveal sensitive content across the entire palace.
+
+Conservative **initial candidates** for the remote read-only allowlist, subject to audit and denial tests: mempalace_status, mempalace_list_wings, mempalace_list_rooms, mempalace_get_taxonomy, mempalace_search, mempalace_get_drawer, mempalace_get_drawers, mempalace_list_drawers, mempalace_kg_stats, mempalace_graph_stats. Add KG queries and traversal only after verifying that their arguments cannot invoke mutations or expose disallowed wings.
+
+**MemPalace CLI version 3.11.0 predates upstream 3.12.0 fixes** covering indirect query target allowlists and daemon mcp_tool read-only gate checks. Do not treat a hidden tool or an unchecked read-only flag on 3.11.0 as sufficient isolation. Review release notes, back up, then test a reviewed patched version in a separate environment before switching the active endpoint.
+
+## Reproducible verification commands
+
+**1. Local private health and route isolation:**
+
+~~~bash
+curl --noproxy '*' -sS -o /dev/null \
+  -w 'Health: %{http_code}\n' http://127.0.0.1:18087/healthz
+
+curl --noproxy '*' -sS -o /dev/null \
+  -w 'Missing Bearer: %{http_code}\n' -X POST \
+  http://172.18.0.1:18086/servers/mempalace/mcp
+
+curl --noproxy '*' -sS -o /dev/null \
+  -w 'Other MCP: %{http_code}\n' \
+  http://172.18.0.1:18086/servers/playwright/mcp
+~~~
+
+Expected: 200, 401, 404, respectively. The private health listener does not prove the proxy or memory backend is healthy; use a separate authenticated MCP initialize and harmless recall to check those layers.
+
+**2. Authenticated public MCP initialize:** Prompt for Cloudflare service credentials and read the local Bearer without printing it. Do not paste a token into a repository, shell history or issue.
+
+~~~bash
+BASE=/home/datament/project/mempalace/bridge
+
+read -rsp 'Cloudflare Client ID: ' CF_ID; echo
+read -rsp 'Cloudflare Client Secret: ' CF_SECRET; echo
+BEARER=$(sed -n 's/^MEMPALACE_BRIDGE_TOKEN=//p' "$BASE/secrets/bridge.env")
+
+printf 'header = "CF-Access-Client-Id: %s"\nheader = "CF-Access-Client-Secret: %s"\nheader = "Authorization: Bearer %s"\n' \
+  "$CF_ID" "$CF_SECRET" "$BEARER" |
+  curl --config - --noproxy '*' --silent --show-error \
+    --max-time 20 -w '\nHTTP %{http_code}\n' \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json, text/event-stream' \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"cloudflare-access-test","version":"1.0"}}}' \
+    https://mempalace.datament.sk/servers/mempalace/mcp
+
+unset CF_ID CF_SECRET BEARER
+~~~
+
+Expected: HTTP 200 with protocolVersion 2025-03-26 and serverInfo name mempalace (reported MCP server version 1.27.2 on 15 November 2026). Do not print response headers with session cookies or identifiers when sharing test output.
+
+**3. Structured access-log diagnostics:**
+
+~~~bash
+BASE=/home/datament/project/mempalace/bridge
+ls -lh "$BASE/logs/"
+tail -n 20 "$BASE/logs/mempalace-access.log" |
+  jq -c '{status, method: .request.method, duration, authorization}'
+~~~
+
+The operator observed access log records, including authorization values denied and not_found. Confirm that authorization headers, Access client secrets, session IDs, raw queries and memory contents are absent before enabling long-term retention.
+
+## Completed deployment and troubleshooting timeline
+
+All items below were observed on 15 November 2026 unless marked as explanatory context:
+
+1. **Inventory existing runtime.** /home/datament/.local/bin/mempalace and mempalace-mcp exist; MemPalace CLI is 3.11.0; the palace has 70,889 drawers. Claude Code had a working SSE connection through local mcp-proxy.
+2. **Verify MCP proxy.** PM2 mcp-proxy in /home/datament/project/mcp-proxy listens at 127.0.0.1:8006. Local /servers/mempalace/sse returned HTTP 200 and text/event-stream; the short curl timed out because SSE remains open.
+3. **Verify Streamable HTTP.** A GET to /servers/mempalace/mcp returned HTTP 400, which did not establish a transport failure. A valid POST initialize returned HTTP 200 and an MCP session ID.
+4. **Inventory tools.** A session-based tools/list returned the 47 names documented above, including write and delete operations.
+5. **Identify Docker gateway.** 172.18.0.1/16 is docker_gwbridge. The PM2 process does not listen on this address, so Traefik must not target 172.18.0.1:8006.
+6. **Create isolated Caddy bridge in Dokploy.** A host-networked bridge listens on 172.18.0.1:18086 and forwards only /servers/mempalace/mcp to 127.0.0.1:8006. A test initialize through the gateway returned HTTP 200. Playwright and WordPress tests returned 404.
+7. **Consolidate under the datament-owned MemPalace project.** The files moved to /home/datament/project/mempalace/bridge. The host account is already datament; sudo -iu datament was not needed and was not permitted by sudo policy.
+8. **Create Bearer token.** A random 32-byte token was created as MEMPALACE_BRIDGE_TOKEN in private secrets/bridge.env with file mode 0600. The original compose env_file reference failed inside Dokploy deployment preparation, so Dokploy Environment and Compose interpolation were used instead.
+9. **Validate Caddy configuration.** The correct one-off command runs caddy validate rather than attempting to execute validate as the image entrypoint. Validation passed; formatting warnings were non-fatal.
+10. **Repair hardened container execution.** With user 1001:1001, cap_drop ALL and no-new-privileges, the stock Caddy binary exited with operation not permitted. A locally built custom image removed the unnecessary cap_net_bind_service file capability. The hardened container started normally.
+11. **Repair credentials.** Local and Dokploy Bearer values initially failed the equality check; authenticated requests returned 401. After synchronizing them, local authenticated initialization returned HTTP 200.
+12. **Separate health endpoint.** The initial /healthz rule on port 18086 had an IP-matcher mismatch and returned 404; a localhost-only listener on 127.0.0.1:18087 returned HTTP 200. Docker reported running and healthy.
+13. **Verify public hostname.** Domain corrected to mempalace.datament.sk. A browser without Caddy credentials received the Caddy JSON 401, demonstrating that the public route reached Caddy for that request.
+14. **Repair Cloudflare Access Service Auth.** Public POST with Bearer but without accepted Access credentials returned HTTP 302 to Cloudflare login. The MemPalace service credential was missing from the Access application's policy. After inclusion, a public three-header initialize returned HTTP 200.
+15. **Do not assume portal readiness.** The successful direct HTTP handshake does not prove that the MCP Portal has synchronized tools, that ChatGPT can call them, or that write operations are refused.
+
+No PM2 restart, palace migration, memory reindexing or modifications to Graphify, Ghost or Logiscool were required for the bridge.
+
+## Remaining work: implement in this exact order
+
+<Steps>
+  <Step title="1. Capture a safe runtime and deployment baseline">
+    Record PM2 name, proxy package/version, current MemPalace CLI and MCP serverInfo versions, Dokploy project, image name and (privately) image digest, config checksum, tunnel/Traefik route, log location, and current schedule owners. Store secrets separately. Record results and an operator/time stamp. **Gate:** the working authenticated public initialize still returns 200 and local agents still connect.
+  </Step>
+  <Step title="2. Inventory and test backups before touching MemPalace">
+    Identify the authoritative backend and any external databases, plus all current mining/sync jobs. Take a consistent, encrypted backup using the backend's supported method; perform an isolated restoration and a harmless search. Do not simply tar an active database unless its consistency requirements are understood. **Gate:** documented backup path, restore date and integrity evidence; no production palace changed.
+  </Step>
+  <Step title="3. Review and stage MemPalace security updates">
+    Compare installed CLI 3.11.0 with a reviewed patched release (3.12.0 or later). Verify Python compatibility, release notes, locking, tool dispatch, storage compatibility and daemon behavior. Stage the candidate in an isolated environment against a restored copy, not the live palace. **Gate:** version-specific read-only and indirect mutation regression tests pass; rollback candidate recorded.
+  </Step>
+  <Step title="4. Create a server-enforced read-only remote boundary">
+    **Do not expose the current 47-tool endpoint unchanged.** Prefer a dedicated read-only MCP listener/process using the existing installation and authoritative storage only if supported safely by the reviewed version; it must not introduce a second memory database or writer. Alternatively use an MCP-aware filtering gateway with an exact tools/list and tools/call allowlist, including indirect call validation. A Caddy URL matcher alone is not sufficient. Keep the original local PM2 endpoint and local Claude/Codex clients unchanged. **Gate:** an authenticated remote user cannot call any mutation tool, even by manually crafted JSON-RPC calls.
+  </Step>
+  <Step title="5. Define privacy scope and tool allowlist">
+    Decide which wings/rooms are appropriate for a remote ChatGPT client. Test search/get operations for cross-wing leakage and restrict access before sharing the palace broadly. If per-wing authorization is not supported, treat remote read access as access to the whole palace and either isolate data or do not enable the client. **Gate:** explicit approved tool list, approved wing scope, documented negative tests.
+  </Step>
+  <Step title="6. Route the remote gateway to the reviewed read-only boundary">
+    Keep Cloudflare Access, Traefik, the Docker bridge host binding and secrets. Change only the Caddy upstream once the replacement path passes local tests; retain a quick rollback to the current PM2 upstream. Preserve health at 127.0.0.1:18087, logging and the authenticated route. **Gate:** 200 initialize, 401 missing Bearer, 404 unrelated paths and confirmed denial of mutation.
+  </Step>
+  <Step title="7. Add MemPalace to the existing Cloudflare MCP Portal">
+    Add server mempalace, upstream https://mempalace.datament.sk/servers/mempalace/mcp, Streamable HTTP and verified custom upstream headers (CF-Access-Client-Id, CF-Access-Client-Secret and Authorization). Keep portal user authentication distinct from upstream Service Auth. Synchronize capabilities and inspect the exact advertised tool list. **Gate:** only approved read-only tools are reachable through the Portal and a forbidden tool call is denied.
+  </Step>
+  <Step title="8. Run an end-to-end ChatGPT read-only acceptance test">
+    Through the approved MCP client, initialize, list visible tools, read status, search a non-sensitive known test record and retrieve it. Attempt a harmless forbidden write against disposable test data; require explicit rejection with no state change. Confirm local Claude/Codex access and existing PM2 routes still work. **Gate:** evidence of read success, write denial and no regression.
+  </Step>
+  <Step title="9. Finish operational readiness">
+    Check /healthz, logs and rotation; confirm logs have no secrets, memory text or session tokens; set alerting for restarts, authentication failures, bridge errors, stale mining jobs, disk growth and backup age. Record token-rotation procedure, privileged operator list and periodic test-restore cadence. **Gate:** monitoring and tested recovery plan recorded.
+  </Step>
+  <Step title="10. Update the documentation and only then enable intended clients">
+    Update this runbook and the dated changelog with verified versions, selected read-only mechanism, exact accepted tool list, backup evidence and the Portal acceptance result. Review the draft PR for sensitive information before merging. **Gate:** the Portal is enabled only after the preceding gates are signed off.
+  </Step>
+</Steps>
 
 ## Monitoring and troubleshooting
 
-The [upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md) describes `/healthz` for liveness and protected `/statusz` for operational state. Watch service restarts, failed recalls, writer-lease errors, memory freshness, refresh job results, backend capacity and backup age. Record checks and alerts privately; none of these monitors was verified as configured on Datament.
+**Bridge health:** http://127.0.0.1:18087/healthz checks Caddy process readiness; it does not test the full palace.  
+**Bridge access log:** /home/datament/project/mempalace/bridge/logs/mempalace-access.log uses structured JSON, header redaction and rotation.  
+**Runtime diagnostics:** docker logs --tail 100 mempalace-bridge; docker inspect for status and health; pm2 ls for mcp-proxy.  
+**Unverified monitoring:** alerting, mining freshness, backup age and recovery testing are still pending.
 
-| Symptom | MemPalace-specific investigation |
+| Symptom | Proven or recommended investigation |
 | --- | --- |
-| No MemPalace tools in ChatGPT | MemPalace is not currently in the visible portal server list; first verify local HTTP availability, registration and tool synchronization |
-| Local CLI works but HTTP fails | Check whether `mempalace serve` is actually running, the configured transport, private bind and installed-version flags |
-| Read-only mode still offers a state-changing tool | Stop external exposure and compare the installed version's tool registry and denial behavior with upstream implementation |
-| Search returns old or missing records | Inspect the authoritative backend, wing/room filters, last successful mining and potential duplicate or failed refresh jobs |
-| Writer lock or concurrent-write errors | Identify the current writer and stop competing starts; do not delete leases or data without an approved recovery procedure |
-| Health succeeds but clients cannot recall | Test the MCP handshake and authenticated read tool; liveness does not establish application authorization or data freshness |
-
-For Cloudflare 302/401/406/504 and OAuth troubleshooting, use the shared [Connection setup](/mcp/connection-setup) runbook.
+| Browser gets Caddy JSON 401 | Expected when no valid Bearer is sent; the public request reached the bridge |
+| Valid Bearer still gets 401 | Compare local private token with Dokploy Environment without printing values; redeploy existing bridge after correcting |
+| Public curl receives Cloudflare 302 | Check Access Service Auth policy includes the exact service token; do not disable Access |
+| Public curl returns 200 but Portal errors | Validate Portal custom upstream headers, transport mode, user auth mode and capability synchronization |
+| Bridge responds 404 for Playwright or WordPress | Expected path isolation; those services must remain blocked |
+| Old /healthz on bridge port returned 404 | The previous remote_ip matcher did not accept the observed connection; use localhost-only :18087 |
+| Docker exits 255 with operation not permitted | Stock Caddy binary file capability conflicted with no-new-privileges, cap_drop and non-root UID; use the vetted local rootless image |
+| Dokploy says env file not found | Do not reference an inaccessible absolute env_file; use Dokploy Environment and Compose interpolation |
+| Docker says exec validate not found | Invoke caddy validate, not validate directly |
+| 502/504 upstream errors | Check Traefik target :18086, Caddy process and PM2 :8006; do not point Traefik to gateway :8006 |
+| Tool list includes delete/update | **Stop remote enablement** until server-side read-only enforcement is demonstrated |
+| Memory search stale or missing | Inspect palace backend, wing filters, mining/sync job results and storage health |
 
 ## Rollback and change control
 
-If a new remote integration causes errors, first disable **only the new MemPalace portal mapping** and stop **only the newly introduced HTTP service**, after checking existing local client dependencies. Preserve the existing palace, refresh jobs, PM2 proxy, Graphify, Ghost and Logiscool services. Revert the MemPalace service to its previously recorded configuration or pinned revision if one was changed. Validate local recall, refresh health and stored-data integrity afterward.
+1. First disable **only the MemPalace mapping** in the Cloudflare MCP Portal, if enabled; do not remove other upstreams.
+2. If the remote read-only listener or gateway fails, revert only its Caddy upstream to the last tested version, using the backed-up Caddyfile and deployment revision. Restore or rebuild the pinned local Docker image if needed.
+3. If the bridge itself fails, stop or redeploy only the Dokploy project ai-agents-mempalacebridge-hutugi after checking its owner and backups. Preserve the host PM2 mcp-proxy and the existing local Claude/Codex connections.
+4. Re-run local MCP initialization, 401/404 isolation checks, private /healthz, and public authorized initialize.
+5. Never delete, reinitialize, overwrite or migrate the palace as a rollback shortcut. Do not alter independent Graphify, Ghost, Logiscool or mining refresh jobs to troubleshoot this bridge.
 
-Do **not** delete, reinitialize, migrate or overwrite the palace as a rollback shortcut. Before a production change, record the exact prior revision, supervisor configuration and tested restoration procedure privately.
+Keep the previously working /opt/mempalace-bridge/Caddyfile backup until the replacement and rollback are tested. Keep secret values out of documentation, Docker build context and public repositories.
 
 ## Source references
 
 - [MemPalace upstream repository](https://github.com/MemPalace/mempalace)
 - [Upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md)
-- [Upstream MCP tool overview](https://github.com/MemPalace/mempalace/blob/develop/website/guide/mcp-integration.md)
-- [Datament shared MCP connection setup](/mcp/connection-setup)
+- [Upstream MCP integration guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/mcp-integration.md)
+- [Shared Datament MCP connection setup](/mcp/connection-setup)
+- [Graphify reference](/mcp/graphify-reference)
 - [Dated Datament MCP changelog](/mcp/changelog)
 
-Upstream documentation describes capabilities, not the exact installed MemPalace build. Recheck version-specific flags, security fixes and tool lists against the pinned installation before treating this page as a deployment runbook.
+This runbook records operator-supplied commands and outputs from 15 November 2026. Treat future configuration values, version changes and accepted security controls as unverified until supported by dated evidence.
