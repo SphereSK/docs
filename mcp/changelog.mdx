@@ -12,6 +12,19 @@ Add new entries at the top.
 
 ## 15 November 2026
 
+### MemPalace MCP baseline documented; remote integration not yet verified
+
+Added [MemPalace reference](/mcp/mempalace-reference) covering the reported local installation, upstream architecture and tools, authentication boundaries, storage and refresh ownership, backup requirements, deployment checks, monitoring, troubleshooting and rollback.
+
+Evidence collected in this documentation session:
+
+- The Datament MCP Portal listed Ghost, Graphify and Logiscool, but **not MemPalace**. No live MemPalace portal tool discovery or end-to-end client call was verified.
+- The previous operator handoff described an existing local palace, an MCP proxy and refresh jobs, but the installed version, runtime flags, writer ownership and backup restore status were not independently checked.
+- The upstream MemPalace source documents HTTP MCP serving, bearer authentication, read-only mode and health endpoints. These upstream capabilities are not a verified Datament deployment configuration.
+- No deployment, portal route, local memory, job schedule, credentials or production service was modified. Remote read-only integration and restore validation remain planned.
+
+Reuse [Connection setup](/mcp/connection-setup) for the common Cloudflare and ChatGPT steps. The reference explicitly records missing acceptance evidence rather than treating a local installation as a completed remote deployment.
+
 ### Winter campaign 2026/27 summary added
 
 A new page, [Winter campaign 2026/27](/content/winter-campaign-2026-27), summarises the Logiscool Trnava winter campaign plan dated 13 November 2026 and records the review findings, open decisions, and the split between MCP and manual work. The full plan was saved to the claude.ai project **SEO - Logiscool** as `claude/winter-campaign-plan-2026-27.md`.
