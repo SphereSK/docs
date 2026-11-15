@@ -37,6 +37,105 @@ ChatGPT -> Cloudflare MCP Portal -> Access-protected upstream -> Cloudflare Tunn
 
 The upstream and portal hostnames have different roles. Do not route the portal hostname back to your MCP container.
 
+## Visual walkthrough
+
+The diagrams below show **how a new MCP is added without replacing the existing Datament portal, tunnel or Traefik installation**. They are editable Mermaid diagrams rendered directly by Mintlify; the specific onboarding fields and commands remain in the numbered procedure that follows.
+
+### Architecture: request path and trust boundaries
+
+```mermaid
+flowchart LR
+    Client["ChatGPT / approved MCP client"]
+    Portal["Existing Datament MCP Portal"]
+    Access["Cloudflare Access<br/>Service Auth"]
+    Tunnel["Existing Cloudflare Tunnel"]
+    Traefik["Existing Dokploy / Traefik"]
+    App["New MCP service"]
+    Client -->|"Portal login / OAuth"| Portal
+    Portal -->|"Access service-token headers<br/>+ optional application Bearer"| Access
+    Access --> Tunnel
+    Tunnel --> Traefik
+    Traefik -->|"Keep original MCP path"| App
+```
+
+The **portal hostname** (`mcp-server.datament.sk`) belongs to Cloudflare's managed portal and is not another Traefik upstream. The **upstream hostname** (for example `example.datament.sk`) resolves through the existing tunnel. The portal's user login, Cloudflare Access Service Auth and the MCP application's own authentication are separate controls.
+
+### Mind map: what each new MCP needs
+
+```mermaid
+mindmap
+  root((New Datament MCP))
+    Cloudflare Access
+      Dedicated service token
+      Service Auth policy
+      Assign policy to application
+    Network
+      Existing Tunnel
+      Dokploy Traefik route
+      Docker service or private bridge
+    MCP application
+      Exact MCP path and transport
+      Optional application Bearer
+      Tool permissions and data scope
+    Existing MCP Portal
+      Register upstream
+      Sync approved tools
+      Authorize clients
+    Operations
+      HTTP and tool tests
+      Logs and monitoring
+      Backup and rollback
+```
+
+### Decision diagram: Docker or host-loopback MCP?
+
+```mermaid
+flowchart TD
+    Start["New MCP server"] --> Where{"Where does the MCP listen?"}
+    Where -->|"Docker network"| Docker["Traefik routes to Docker service<br/>and internal HTTP port"]
+    Where -->|"Host loopback"| Host["Dedicated, path-restricted bridge<br/>with its own private port"]
+    Docker --> Route["New upstream hostname<br/>on existing Tunnel and Traefik"]
+    Host --> Route
+    Route --> Auth{"Cloudflare Access policy<br/>attached to this application?"}
+    Auth -->|"No"| Fix["Create Service Auth policy<br/>and attach exact service token"]
+    Fix --> Auth
+    Auth -->|"Yes"| Test["Test Access headers<br/>and optional app Bearer"]
+    Test --> Safe{"Server-side tool permissions<br/>and data scope verified?"}
+    Safe -->|"No"| Block["Keep disabled for clients"]
+    Safe -->|"Yes"| Register["Register and sync in MCP Portal"]
+    Register --> ClientTest["Real client tool call and audit"]
+```
+
+### Authentication sequence: why the policy assignment matters
+
+```mermaid
+sequenceDiagram
+    participant Client as Approved MCP client
+    participant Portal as MCP Portal
+    participant Access as Cloudflare Access
+    participant Proxy as Traefik / app bridge
+    participant MCP as MCP backend
+
+    Client->>Portal: Authenticated tool request
+    Portal->>Access: Upstream HTTP request with service-token headers
+    alt Service Auth policy missing or token not selected
+        Access-->>Portal: Login redirect (302) or Access denial
+    else Service Auth policy accepts token
+        Access->>Proxy: Forward to upstream hostname
+        alt Application Bearer missing or wrong
+            Proxy-->>Portal: Application HTTP 401
+        else Application authorization valid
+            Proxy->>MCP: Streamable HTTP MCP request
+            MCP-->>Portal: MCP result
+            Portal-->>Client: Authorized result
+        end
+    end
+```
+
+<Note>
+  The successful MemPalace public initialization test returned HTTP 200 after both the Cloudflare Service Auth policy and the application's Bearer token were correct. A successful initialization does not prove that remote write operations are blocked; test permissions separately before enabling client access.
+</Note>
+
 ## Standard Datament onboarding: exact operator sequence
 
 Use this **token-first workflow** for each new MCP server. The later numbered sections are implementation references for Docker, Traefik, Cloudflare, and the ChatGPT client. Record completion and exact verification evidence for each new server; do not assume that a working server needs another tunnel or portal.
