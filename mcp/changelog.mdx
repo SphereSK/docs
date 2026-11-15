@@ -12,18 +12,19 @@ Add new entries at the top.
 
 ## 15 November 2026
 
-### MemPalace MCP baseline documented; remote integration not yet verified
+### MemPalace bridge deployed and Cloudflare Access verified; read-only rollout pending
 
-Added [MemPalace reference](/mcp/mempalace-reference) covering the reported local installation, upstream architecture and tools, authentication boundaries, storage and refresh ownership, backup requirements, deployment checks, monitoring, troubleshooting and rollback.
+Updated [MemPalace reference](/mcp/mempalace-reference) with the operator-verified 15 November deployment and the exact ordered remaining implementation and acceptance gates.
 
-Evidence collected in this documentation session:
+Completed and verified:
 
-- The Datament MCP Portal listed Ghost, Graphify and Logiscool, but **not MemPalace**. No live MemPalace portal tool discovery or end-to-end client call was verified.
-- The previous operator handoff described an existing local palace, an MCP proxy and refresh jobs, but the installed version, runtime flags, writer ownership and backup restore status were not independently checked.
-- The upstream MemPalace source documents HTTP MCP serving, bearer authentication, read-only mode and health endpoints. These upstream capabilities are not a verified Datament deployment configuration.
-- No deployment, portal route, local memory, job schedule, credentials or production service was modified. Remote read-only integration and restore validation remain planned.
+- The existing MemPalace CLI **3.11.0** has an authoritative palace with **70,889 drawers** in the recorded status snapshot. PM2 **mcp-proxy** listens on **127.0.0.1:8006**. Local Streamable HTTP initialization succeeded and `tools/list` exposed **47 tools**, including mutation and deletion operations.
+- A hardened Caddy bridge in Dokploy Compose project **ai-agents-mempalacebridge-hutugi** listens on **172.18.0.1:18086**, serves only `/servers/mempalace/mcp`, enforces a private Bearer token, and forwards to the existing PM2 proxy. The project files are under `/home/datament/project/mempalace/bridge`.
+- A separate local health endpoint at **127.0.0.1:18087/healthz** returned HTTP **200**; Docker reported the bridge **healthy**. Missing Bearer returned **401**, unrelated MCP paths returned **404**, and authenticated local MCP initialization returned **200**.
+- The external endpoint is **https://mempalace.datament.sk/servers/mempalace/mcp** (not the earlier proposed memory.datament.sk). Once the correct MemPalace Access service token was included in the Cloudflare Access application's Service Auth policy, an authenticated public MCP initialization using both Cloudflare service-token headers and the Caddy Bearer token returned **HTTP 200**.
+- Deploying the hardened image **datament/mempalace-caddy:2.10.2-rootless** resolved an `exec /usr/bin/caddy: operation not permitted` failure caused by the standard image file capability and the least-privilege container settings. Dokploy environment interpolation replaced an inaccessible absolute `env_file` reference; a mismatched local/Dokploy Bearer value was corrected. These changes did not require restarting PM2 or reindexing memory.
 
-Reuse [Connection setup](/mcp/connection-setup) for the common Cloudflare and ChatGPT steps. The reference explicitly records missing acceptance evidence rather than treating a local installation as a completed remote deployment.
+**Not yet verified or authorized for client use:** Cloudflare MCP Portal synchronization, live ChatGPT MCP calls, server-enforced read-only tool denial, wing-level data access control, upgraded MemPalace security enforcement, and a tested storage-backup restoration. Remote client enablement remains blocked until the runbook's security gates pass. The documentation update does not itself deploy or enable any new upstream.
 
 ### Winter campaign 2026/27 plan added
 
