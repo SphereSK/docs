@@ -1,0 +1,29 @@
+name: Docs checks
+on:
+  pull_request:
+    paths:
+      - '**/*.mdx'
+      - '**/*.md'
+      - 'docs.json'
+      - '.mintignore'
+      - '.github/workflows/docs-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: docs-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  docs-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --global mint@4.3.34
+      - run: mint validate
+      - run: mint broken-links

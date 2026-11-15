@@ -1,0 +1,69 @@
+---
+title: "15 November 2026: Ghost MCP enhancements"
+sidebarTitle: "15 Nov: Ghost"
+description: "Review the Ghost MCP changes shipped on 15 November 2026, their source commits, test results, deployment evidence and remaining client limitations."
+keywords: ["Ghost", "MCP", "change record", "deployment", "snippets"]
+---
+
+Ghost MCP now exposes 37 tools with SEO metadata, excerpts, code injection, explicit slug renaming, URL image uploads and saved snippet reads. This record separates the code changes from the user-operated deployments and read-only production verification.
+
+Change ID: `2026-11-15-ghost-mcp`. All human-facing times use Europe/Bratislava. Status: **implemented, tested, deployed and read-only verified**.
+
+## Source and sequence
+
+The running service originally used the official `@tryghost/ghst@0.19.0` package. Its installed MCP source matched the upstream `v0.19.0` release. A fork was created at [SphereSK/ghst](https://github.com/SphereSK/ghst), with changes on `feature/mcp-seo-enhancements`.
+
+| Revision | Result | Verification |
+| --- | --- | --- |
+| [0539b54](https://github.com/SphereSK/ghst/commit/0539b544cfa1e5cb0537c16f57b4501fdb0aef14) | Nine SEO fields, field selection, status filtering and direct-connection discovery | 275 offline tests passed; 35 tools |
+| [faedd43](https://github.com/SphereSK/ghst/commit/faedd43bf35928ec881393de215c695be4bf51c2) | Excerpt/injection fields, slug renaming, URL uploads, native Lexical input and snippet reads | 291 offline tests passed; 37 tools |
+
+Codex implemented and tested the changes, then pushed the source. The user built and deployed the images. Codex independently checked the running service after each deployment.
+
+## Problems resolved
+
+- `ghost_site_list` returned an empty alias array even though environment-backed credentials worked. It now also reports a sanitized connection descriptor, without inventing a selectable alias.
+- The list `status` argument was sent as a query parameter that Ghost ignored. It now composes with Ghost's filter expression.
+- Full list responses included content and expanded author data. Optional `fields` and `formats` support smaller reads without changing defaults.
+- Excerpt and code-injection fields were not mapped, so an apparently accepted argument could be discarded. They now have explicit schemas and payload mappings.
+- `slug` selected an existing resource; it did not rename it. `new_slug` now expresses a rename separately.
+- Image upload expected a path on the MCP server. `image_url` now downloads supported public HTTPS images and uploads the bytes.
+- Saved snippets returned empty Mobiledoc placeholders by default. Explicit Lexical reads retrieve the real card data.
+
+See [Ghost reference](/mcp/ghost-reference) for the current tool contract and limitations.
+
+## Deployment evidence
+
+The verified follow-up image is `datament/ghst:seo-faedd43`. Its MCP process started at **01:23:43 on 15 November 2026**. The deployed bundle matched the tested local bundle with SHA-256:
+
+```text
+90e6407e8e79df6bb8260f911008787a155dc76f17940449cf4d4a6ab395d373
+```
+
+The first deployment also recreated Ghost CMS. During the follow-up deployment, Ghost CMS and Graphify retained their container identities and start times. The implementation and verification work did not change Cloudflare routing or OAuth.
+
+## Checks performed
+
+- Lint, formatting, TypeScript checks and production build passed.
+- The full final suite passed: **32 test files, 291 tests**. Writes used mocks.
+- A disposable Node 22 container with no network or production credentials advertised all 37 tools through the real MCP SDK.
+- The deployed HTTP server advertised all new schemas, including both snippet tools.
+- Requests without authentication returned HTTP 401.
+- Published filtering, field selection and distinct pagination results passed for posts and pages.
+- The final read observed 15 published posts and 3 published pages. These counts are dated observations, not fixed acceptance criteria.
+- All three saved CTA snippets returned one native Lexical node each.
+- Site discovery succeeded through the existing Portal.
+
+## Limits of verification
+
+No live create, update, rename, upload, publish, email or snippet-insertion calls were made during this work. Live write persistence was not tested; it is covered by offline tests of the exact deployed code. A future live draft test still requires explicit authorization.
+
+The current chat continued to expose older connector definitions despite the server advertising the new schemas. Server deployment and client/Portal discovery are separate checks; do not declare client refresh complete from a direct server check alone.
+
+Earlier rendered-HTML reads confirmed that `/kontakt/` had no description meta tag and used excerpt fallback for social previews. A sampled published article rendered its SEO and social metadata. These were audits, not content corrections.
+
+## Rollback and follow-up
+
+Retain the previously working image `datament/ghst:seo-0539b54` for rollback. Restore only the MCP image reference in the saved deployment configuration and recreate only that service. Preserve credentials, command, networks, security settings and routing. Recheck read-only discovery and authentication afterward.
+
+Next actions are client tool-discovery refresh and review of the documentation PR. MemPalace integration remains planned work; it was not implemented or validated in this change.
