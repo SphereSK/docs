@@ -56,7 +56,7 @@ The upstream [MCP integration guide](https://github.com/MemPalace/mempalace/blob
 | Status and taxonomy | `mempalace_status`, `mempalace_list_wings`, `mempalace_list_rooms`, `mempalace_get_taxonomy` | Read-only, subject to privacy review |
 | Recall | `mempalace_search`, `mempalace_get_drawer`, `mempalace_list_drawers` | Read-only, with approved content scope |
 | Relationships and continuity | `mempalace_kg_query`, `mempalace_kg_timeline`, `mempalace_diary_read` | Read-only only if the content is appropriate for portal clients |
-| Mutations | `mempalace_add_drawer`, `mempalace_delete_drawer`, `mempalace_mine`, `mempalace_diary_write` | Do **not** expose through the initial portal integration |
+| Mutations | `mempalace_add_drawer`, `mempalace_update_drawer`, `mempalace_delete_drawer`, `mempalace_diary_write` | Do **not** expose through the initial portal integration |
 
 The upstream `--read-only` mode is designed to hide and refuse mutating tools. **Before exposure, test the installed version's entire advertised tool list and try a forbidden mutation against non-sensitive test data.** Tool availability and host-side side effects can vary by version. A read-only flag does not provide per-project memory authorization by itself; never assume that one authorized client can only see its own wing.
 
