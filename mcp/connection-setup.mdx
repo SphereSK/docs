@@ -323,6 +323,39 @@ For a fully worked host-loopback example, see [MemPalace reference](/mcp/mempala
   </Step>
 </Steps>
 
+### Screen-by-screen walkthrough: screenshots to capture
+
+The written steps above identify the precise controls to use. Add **real, redacted screenshots of the current Cloudflare and Dokploy UI** to the locations below when those screenshots are available; do not use fabricated interface images. The documentation currently contains the diagrams and field-level instructions, **not actual console screenshots**.
+
+| Screen | What the screenshot must show | Suggested asset path |
+| --- | --- | --- |
+| 01. Service Tokens | Zero Trust → Access controls → Service credentials → Service Tokens; create-token action, label and expiry | `/images/mcp/onboarding/01-service-token.png` |
+| 02. Service Auth policy | Access controls → Policies; action **Service Auth**, Include selector **Service Token**, selected token name | `/images/mcp/onboarding/02-service-auth-policy.png` |
+| 03. Policy attached to application | Access controls → Applications → upstream hostname → Policies; the policy must visibly be assigned | `/images/mcp/onboarding/03-application-policy.png` |
+| 04. Tunnel published route | Existing tunnel's published hostname and reachable Traefik origin (redact connector identifiers) | `/images/mcp/onboarding/04-tunnel-route.png` |
+| 05. Dokploy/Traefik domain | Hostname and correct backend **root URL**; show that MCP path is not added to the backend target | `/images/mcp/onboarding/05-traefik-route.png` |
+| 06. Dokploy Environment | Variable **names only**, no Bearer value; Compose and running health check | `/images/mcp/onboarding/06-dokploy-service.png` |
+| 07. MCP Portal upstream | Full HTTPS MCP URL, transport, authentication method and server status; redact header values | `/images/mcp/onboarding/07-portal-upstream.png` |
+| 08. MCP Portal client access | Existing portal server assignment, approved tool list, and client connection/ready state | `/images/mcp/onboarding/08-portal-client.png` |
+
+<Warning>
+  Screenshots must never reveal service-token client secrets, Bearer values, OAuth secrets, session cookies, JWTs, cloudflared tunnel tokens, private memory data, or user-identifying records. Redact these fields **before uploading** to the repository. Avoid displaying complete Access login URLs because they may contain signed state.
+</Warning>
+
+<Accordion title="How to insert verified screenshots into this guide">
+  Save each approved PNG under the corresponding `images/mcp/onboarding/` path in the docs repository. Add it directly beneath the relevant numbered `<Step>` using Mintlify's `<Frame>` and an image with descriptive alternative text.
+
+  Example syntax (do not use before the file exists):
+
+  ~~~mdx
+  <Frame caption="Select Service Auth and the correct service token">
+    <img src="/images/mcp/onboarding/02-service-auth-policy.png" alt="Cloudflare Access policy editor showing Service Auth action and selected service token" />
+  </Frame>
+  ~~~
+
+  Do not commit placeholder assets or screenshots of a different Cloudflare interface version as if they were observed in Datament.
+</Accordion>
+
 ### MemPalace worked example, 15 November 2026
 
 | Stage | Actual result |
