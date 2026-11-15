@@ -1,7 +1,7 @@
 ---
 title: "Winter campaign 2026/27"
 sidebarTitle: "Winter campaign 2026/27"
-description: "Summary and review of the Logiscool Trnava winter campaign plan, 16 November 2026 to 31 January 2027."
+description: "Logiscool Trnava winter campaign plan, 16 November 2026 to 31 January 2027: voucher, Open Days and 2nd-semester enrolment."
 keywords:
   - "winter campaign"
   - "darčekový poukaz"
@@ -13,64 +13,385 @@ keywords:
   - "Freshsales"
 ---
 
-## Status
-
-Plan dated 13 November 2026, reviewed on 15 November 2026. The full plan is in the claude.ai project **SEO - Logiscool** as `claude/winter-campaign-plan-2026-27.md`, with a Slovak version and a 15-slide deck. This page is a summary and does not replace the plan.
+<Info>
+  Plan dated 13 November 2026 by Albert Epstein; review added on 15 November 2026. A Slovak version with the full Reels and creative section is on [Zimná kampaň 2026/27](/content/zimna-kampan-2026-27).
+</Info>
 
 ## Summary
 
-The campaign runs for 11 weeks as three overlapping tracks. Paid ads, e-mail and local partners carry the result this season, because organic search is still too small.
+The next 11 weeks run as three overlapping campaigns: a gift voucher push until 23 December, Open Days and 2nd-semester enrolment from late December to the end of January, and a retention and referral track for current families throughout. Paid ads, e-mail and local outreach carry the result this season, because organic search is still too small to do it.
+
+The evidence for that last point, from Search Console on 13 Nov 2026: in the last three months programovaniepredeti.sk got 21 impressions for "programovanie pre deti" (position 24.8) and 29 for "kurz programovania pre deti" (position 17.4). Viventoo got 7 impressions in total. SEO work continues, but it will pay off in spring, not by Christmas.
 
 | Campaign | Dates | Main offer | Primary conversion | Lead site |
 | --- | --- | --- | --- | --- |
-| Darček, ktorý má zmysel | 16 Nov – 23 Dec | Darčekový poukaz on a Logiscool program, with a gift pack | Voucher sold | programovaniepredeti.sk |
-| Open Days and 2nd semester | 14 Dec – 31 Jan | Free ukážková hodina, then a beginner course from February | Open Day booking, then registration | programovaniepredeti.sk |
-| Current families | 16 Nov – 31 Jan | Re-enrolment, Bring Your Buddy week, parent referral | Re-registration, referred booking | E-mail, MyLogiscool, classroom |
-| Background: what Logiscool is | Whole period | Awareness content | Reach, video views, remarketing pool | viventoo.com |
+| 1. Darček, ktorý má zmysel | 16 Nov – 23 Dec | Darčekový poukaz on a Logiscool program, with a gift pack | Voucher sold | programovaniepredeti.sk |
+| 2. Open Days and 2nd semester | 14 Dec – 31 Jan | Free ukážková hodina, then beginner course from February | Open Day booking, then course registration | programovaniepredeti.sk |
+| 3. Current families | 16 Nov – 31 Jan | Re-enrolment, Bring Your Buddy week, parent referral | Re-registration, referred Open Day booking | E-mail, MyLogiscool, classroom |
+| Background: what Logiscool is | Whole period | Awareness content on Viventoo, Instagram, Facebook | Reach, video views, remarketing pool | viventoo.com |
 
-Evidence for the paid-first approach, from Search Console for 10 August – 10 November 2026: programovaniepredeti.sk had 21 impressions for "programovanie pre deti" (position 24.8) and 29 for "kurz programovania pre deti" (position 17.4). Viventoo had 7 impressions in total.
+**How to set the targets.** I have no baseline for leads or sales, so the plan sets none. The honest way to set them is capacity: decide how many beginner groups start in February, and multiply by 8 (the manual's optimal group is 6–12 students, minimum 4). That number is the enrolment target; Open Day bookings and ad budget follow from it.
 
-The plan sets no numeric targets because there is no baseline. The enrolment target is the number of February beginner groups multiplied by 8.
+**Three things must be true before any ad money is spent** (week of 16 Nov):
 
-## Gates before ad spend
+1. Lead tracking works: one `generate_lead` event per successful form, as in task T0.8 of the SEO brief.
+2. The stale "Zápis 2026 otvorený" badge on programovaniepredeti.sk is replaced with the February intake.
+3. The voucher page and the Open Day booking path exist and have been tested on a phone.
 
-No ad money is spent until all three are true:
+## What we already have to reuse
 
-1. Lead tracking sends one `generate_lead` event per successful form (task T0.8 in the SEO brief).
-2. The "Zápis 2026 otvorený" badge on programovaniepredeti.sk shows the February intake.
-3. The voucher page and the Open Day booking path work on a phone.
+Most of this plan can be built from existing material: 21 unpublished Viventoo drafts, 14 published posts, and ready-made HQ campaign kits in the Logiscool manual. New production is needed mainly for short video and the voucher page.
 
-## Landing pages
+### Viventoo (Ghost, checked 13 Nov 2026)
 
-Each offer has one landing page on the domain that owns its keyword.
-
-| Offer | Landing page | Status |
+| Existing piece | Status | Use in this plan |
 | --- | --- | --- |
-| Darčekový poukaz | programovaniepredeti.sk/darcekovy-poukaz | New, live by 23 Nov |
-| Ukážková hodina zdarma | programovaniepredeti.sk, Open Day section | Update, live by 14 Dec |
-| Beginner course from February | programovaniepredeti.sk/kruzky-pre-deti-trnava | Update timetable and badge |
-| Camps 2027 | taborypredeti.sk waitlist | Planned for 15 Jan |
-| Birthday party | partydeti.sk | No change |
-| Schools and companies | programovaniepredeti.sk/pre-skoly-a-firmy | New, live by 30 Nov |
+| Deň otvorených dverí v Logiscool | Published 9 Jan 2026 | Update with January 2027 dates and reuse the same URL; do not write a second one |
+| Takto vyzerá ukážková hodina v Logiscool: prvá hra, zábava a zvedaví rodičia | Draft | Publish mid-December; main article behind the Open Day ads and a Reel script |
+| Každé dieťa si zaslúži šancu tvoriť (Centrum pre deti a rodiny) | Draft | Christmas community story; also the local press release |
+| Logiscool na základných školách: deti sa učili, ako sa brániť kyberšikane | Draft | Proof piece attached to the e-mail for school principals |
+| Brainrot a Italian Brainrot; Skibidi meme slang | Drafts | Reach drivers for parents; the SEO brief measured 4,400 and 1,300 monthly searches |
+| Deti a internet; Ako zabezpečiť bezpečnosť vašich detí na internete | Drafts | Merge into one safety guide; lead content for the school and library newsletter |
+| 5 spôsobov, ako posilniť deti prostredníctvom programovania; Ako programovanie pripraví vaše deti na budúci úspech; 3 hlavné piliere digitálnej gramotnosti; Prečo je dobré ovládať digitálne technológie; Kreativita je srdcom digitálnej budúcnosti; Moderné vzdelávanie zamerané na dieťa | Drafts | They overlap. Merge into two articles for the "what Logiscool is about" series; cut each into 3–4 carousels |
+| Objavujeme svet robotiky s LEGO SPIKE; Imagicharms | Drafts | Reel topics and course-content posts |
+| Prečo je gamifikované vzdelávanie efektívne; Trend 6–7; Je WhatsApp naozaj bezpečný pre deti | Published | Re-share as carousels; link from the new safety guide |
+| Leto plné dobrodružstiev (Jul 2026) and the 2026 camp posts | Published | Recut the summer footage in January for the 2027 camp waitlist |
+| Jarné denné tábory v Logiscool | Draft | Hold until February, and only if spring camps run |
+| Tematické narodeninové oslavy: Minecraft a Roblox | Draft | Hold; fold into the re-angled party article from the SEO brief |
+| test-mcp-nepublikovat and the two "-2" duplicates | Drafts | Delete, as already listed in the SEO brief (needs your approval) |
 
-## Key dates
+Ghost analytics returned 0 views for every post in the last 90 days. That looks like analytics not being connected, not real zero traffic, so it is on the validation list.
 
-| Date | Event |
+### Logiscool manual (via the Logiscool MCP)
+
+| HQ kit | What it gives us | Where it is used |
+| --- | --- | --- |
+| [Give the Gift of Knowledge](https://logiscool.atlassian.net/spaces/CISMM/pages/2246377506/Give+the+Gift+of+Knowledge) | Gift pack plus gift card for any program, promo code GIFT, creatives folder, CRM setup | The voucher campaign |
+| [Season's greetings, Christmas, New Year](https://logiscool.atlassian.net/spaces/CISMM/pages/2261581901/Season+s+greetings+Christmas+New+Year) | Greeting cards and Canva templates; HQ says not to wait for new ones | Mikuláš, Christmas and PF 2027 posts and e-mails |
+| [Open Day event organisation](https://logiscool.atlassian.net/spaces/CISMM/pages/2165014584/Open+Day+event+organisation) | Checklist counted back from the event, presentation, name badges | Open Days |
+| [Courses campaign](https://logiscool.atlassian.net/spaces/CISMM/pages/2105280176/Courses) | Ad copy sheets for Facebook and Google (autumn 2024, spring 2025), newsletter templates, the four parent concerns | Ads, e-mails, Reel scripts |
+| [Parent Referral campaigns](https://logiscool.atlassian.net/spaces/CISMM/pages/3323461634/Parent+Referral+campaigns) | Referral e-mail text, 50% mini-workshop voucher, prize draw rules | Current-families track |
+| [Bring your Buddy week](https://logiscool.atlassian.net/spaces/CISMM/pages/2105280841/Bring+your+Buddy+week) | Invitation cards, social and newsletter text, Mailchimp template | Late January |
+| [Free services for schools](https://logiscool.atlassian.net/spaces/CISMM/pages/2105281406/Free+services+for+schools+-+Engagement+guidelines) | E-mail template for principals, press release, classroom presentations, Adventure Book, scholarships | School outreach |
+| [Video Production Standards](https://logiscool.atlassian.net/spaces/CISMM/pages/2789179396/Video+Production+Standards+for+Social+Media) | 9:16, 15–45 seconds, subtitles always, hook in the first 3 seconds | Every Reel |
+
+HQ materials are in English and the manual says local versions come from the master partner. Ask the Slovak master partner this week which Slovak versions already exist.
+
+### Landing pages
+
+The three service sites stay as they are in the SEO brief. This plan adds one new page (the voucher) and one seasonal block (Open Day dates) on programovaniepredeti.sk, and nothing on taborypredeti.sk beyond the 2027 waitlist already planned for 15 January.
+
+## Key dates and campaign calendar
+
+| Phase | Dates |
 | --- | --- |
-| 23 Nov | Voucher page live, ad tests start |
-| 6 Dec | Mikuláš |
-| 14 Dec | Open Day section live |
-| 22 Dec | Last school day, last gift-pack pickup |
-| 23 Dec | Voucher ads end |
-| 4–7 Jan | First Open Days (school holidays) |
-| 8 Jan | School resumes, flyers to schools |
-| 15 Jan | Camp 2027 waitlist live |
-| 28 Jan | Cold ads stop |
-| 1 Feb | Polročné prázdniny; 2nd semester assumed to start that week (to confirm) |
+| Setup and lead tracking | 16 – 22 Nov |
+| Voucher campaign | 23 Nov – 23 Dec |
+| Mikuláš | 6 Dec |
+| Open Day awareness video | 14 Dec – 3 Jan |
+| Christmas school holidays | 23 Dec – 7 Jan |
+| Open Days and 2nd-semester enrolment | 4 – 31 Jan |
+| Bring Your Buddy week | 18 – 24 Jan |
+| 2nd semester starts (to confirm) | Week of 1 Feb |
 
-## Review findings
+The original doc embeds this calendar as a chart; this table is rebuilt from the plan's dates.
 
-The plan follows the project rules on domain intent, landing pages and tracking. These points need fixing:
+The voucher has four selling weeks and Open Days have four booking weeks; the Christmas school break sits between them and is used for cheap video reach, not for selling.
+
+Dates that shape the plan:
+
+- **Sun 6 Dec:** Mikuláš. Small gifts, so it is a reason to post and to mention the voucher, not a sales peak of its own.
+- **Tue 22 Dec:** last school day and the suggested last pickup day for gift packs. After that, PDF vouchers only.
+- **23 Dec – 7 Jan:** Christmas school holidays; school resumes on Friday 8 January ([source](https://www.noviny.sk/slovensko/1252973-ziaci-opaet-sadaju-do-skolskych-lavic-velky-prehlad-datumov-prazdnin-maturit-ci-prijimaciek)). Children are free on 4–7 January, which makes those days good first Open Day slots.
+- **Mon 1 Feb:** polročné prázdniny. The 2nd semester is assumed to start that week; this date needs your confirmation and moves the Open Day window with it.
+- **1–5 Mar:** spring holidays in Trnavský kraj, outside this plan but announced from late January.
+
+## Offers and landing pages
+
+Each offer gets exactly one landing page on the domain that owns its keyword, so the campaign does not create new cannibalisation.
+
+| Offer | Landing page | Status | Form or action | Viventoo support |
+| --- | --- | --- | --- | --- |
+| Darčekový poukaz | programovaniepredeti.sk/darcekovy-poukaz | New, live by 23 Nov | Order form: value or program, buyer contact, delivery (e-mail PDF or pickup with gift pack) | Gift-guide article with a CTA to the page |
+| Open Day (ukážková hodina zdarma) | programovaniepredeti.sk, section with January dates and booking | Update, live by 14 Dec | Booking form with date picker; child's age band | Updated Open Day post; "Takto vyzerá ukážková hodina" |
+| Beginner course from February | programovaniepredeti.sk/kruzky-pre-deti-trnava | Update timetable and badge | Registration | "What Logiscool is about" series |
+| Camps 2027 | taborypredeti.sk waitlist | Already planned for 15 Jan | Waitlist form | Jarné prázdniny 2027 article |
+| Birthday party | [www.partydeti.sk](http://www.partydeti.sk) | No change | Party inquiry | None in this period |
+| Schools and companies | programovaniepredeti.sk/pre-skoly-a-firmy | New, simple, live by 30 Nov | Short inquiry form | Kyberšikana school story |
+
+### The voucher, as the HQ kit defines it
+
+The HQ "Give the Gift of Knowledge" program is a gift pack plus a gift card for one Logiscool program. The buyer registers with promo code GIFT and pays the program or the first course instalment, then collects the pack at the school. HQ allows an optional discount and recommends 5% at most. The buyers named in the kit are parents and grandparents.
+
+Recommended local setup, for you to confirm:
+
+- **Lead product:** the first instalment of a beginner course starting in February. It ties the gift to the 2nd-semester intake instead of competing with it.
+- **Why not a workshop voucher as the lead:** the HQ business calendar says workshops should not be advertised during a course campaign, because courses carry the higher lifetime value. Keep the mini workshop as the referral reward only.
+- **Delivery:** printable PDF by e-mail for last-minute buyers, plus pickup of the physical gift pack at Paulínska 20 until 22 December.
+- **Page content:** what the child gets, age groups, how the recipient redeems it, validity, pickup hours, FAQ. Show the price on the page if it is in the structured data, as the SEO brief requires.
+- **Message:** "Darček, ktorý sa nerozbije ani neomrzí. Darujte dieťaťu polrok, v ktorom si naprogramuje vlastnú hru."
+
+### Search demand behind the voucher (OpenSEO, Slovakia, 13 Nov 2026)
+
+| Keyword | Monthly searches | Difficulty | CPC (USD) |
+| --- | --- | --- | --- |
+| darčekový poukaz | 1,600 | 7 | 1.07 |
+| darček pre deti | 1,000 | 0 | 0.51 |
+| zážitkové darčeky | 1,000 | 0 | 0.63 |
+| darčeková poukážka | 880 | 0 | 0.92 |
+| darček pre 8 ročného chlapca | 590 | 0 | 0.48 |
+| darček pre 10 ročného chlapca | 590 | 0 | 0.39 |
+| darček pre 12 ročného chlapca | 390 | 0 | 0.46 |
+| vianočný darček pre deti | 210 | 0 | 0.34 |
+| zážitkový darček pre deti | 110 | 0 | 0.43 |
+
+These are national figures and paid competition is at the maximum for all of them, so e-shops own the results. A new page will not rank by Christmas. Use the keywords in Google Ads limited to the Trnava area this year, and keep the page and the gift guide live all year so they can rank for Christmas 2027 and for birthdays.
+
+## Channel roles
+
+Every channel has one job, so the same message is not posted everywhere in the same form.
+
+| Channel | Job in this campaign | Weekly rhythm | Sends people to |
+| --- | --- | --- | --- |
+| Instagram | Show what children make and who teaches them; Reels for reach | 2 Reels, 2 carousels or photos, Stories on 4 days | Link in bio: voucher until 23 Dec, then Open Day |
+| Facebook | Reach parents and grandparents; local groups; events | 3 posts (Reels cross-posted), 1 Facebook Event per Open Day weekend | Landing pages; event page |
+| Viventoo | Explain and build trust; give ads and newsletters something worth reading | 1 article a week | Service sites through the tag-based CTA with UTMs |
+| Landing pages | Convert | Updated at each phase change | Form, then Freshsales |
+| Google Ads | Catch people already searching: brand, courses in Trnava, gift keywords | Always on, budgets shift by phase | Voucher page or Open Day booking |
+| Meta Ads | Create demand, test audiences, retarget | Always on, new creative every 2 weeks | Voucher page or Open Day booking |
+| E-mail and Freshsales | Convert known contacts; cheapest sales of the season | 1 send a week per segment, at most | Landing pages |
+| Google Business Profile | Local visibility and reviews | 1 post a week; Offer post for the voucher, Event posts for Open Days | Landing pages |
+| WhatsApp and phone | Fast answers; Open Day reminders; day-after follow-up | As leads arrive | Booking or registration |
+| Schools, library, companies | Borrow trusted local channels | See the outreach section | /pre-skoly-a-firmy or Open Day |
+
+### Content pillars for Instagram, Facebook and Viventoo
+
+1. **What Logiscool is.** A 30-second "čo je Logiscool" Reel, trainer introductions, a classroom walk-through, how a lesson runs.
+2. **What children make.** Screen recordings of student projects with the child's own commentary as voice-over, without faces unless consent is on file.
+3. **Parent concerns.** The manual lists four: too much screen time, too early to start, maths is required, AI will replace programming. One Reel and one carousel per concern.
+4. **Seasonal.** Mikuláš, voucher unboxing, last pickup day, PF 2027, back to school on 8 January.
+5. **Parent help.** Brainrot, Skibidi, WhatsApp safety, kyberšikana. These earn reach and shares; they sell nothing directly.
+
+### Video production
+
+Plan two filming afternoons, one in the week of 16 November and one in the week of 7 December, during the last lessons before Christmas. Each should yield 8–10 clips. Follow the HQ standard: vertical 9:16, 15–45 seconds, subtitles on every video, a hook in the first 3 seconds, logo in the top-right corner. Film only children whose parents have signed photo consent.
+
+The 18 Reel scripts, static creatives and filming tips are in the Slovak version: [Nápady na kreatívu a krátke Reels](/content/zimna-kampan-2026-27#nápady-na-kreatívu-a-krátke-reels).
+
+## Audiences and testing plan
+
+Test audiences first with one proven creative, then test creatives on the winning audience. Changing both at once tells you nothing.
+
+### Meta Ads audiences (Trnava plus about 25 km; adjust the radius to where your current students come from)
+
+| Audience | Who | Used for | Note |
+| --- | --- | --- | --- |
+| A. Parents, broad | Age 28–50, parents of children 6–16, no interest targeting | Voucher, Open Day | The control; Meta's delivery usually finds parents on its own |
+| B. Parents, interests | Same, narrowed by education, STEM, Minecraft, Roblox, LEGO | Voucher, Open Day | Tested against A |
+| C. Grandparents | Age 55–70 | Voucher only | HQ names grandparents as buyers; simple creative, larger text |
+| D. Lookalike of customers | 1–3% lookalike from the Freshsales customer list | Open Day | Only if marketing consent covers uploading the list |
+| E. Warm | Visitors of the four sites (180 days), Instagram and Facebook engagers (365 days), 50% video viewers | Voucher last week; Open Day | Smallest and usually cheapest |
+| F. Camp parents 2026 | Customer list segment | Open Day | Children already liked a camp; best cross-sell |
+| Excluded | Current course families | All acquisition ads | They get the referral and re-enrolment e-mails instead |
+
+### Test sequence
+
+| When | Test | Variants | Decide by |
+| --- | --- | --- | --- |
+| 23 Nov – 6 Dec | Voucher audience | A vs B vs C, same Reel and same static | Cost per voucher-page lead |
+| 7 – 20 Dec | Voucher creative, on the winner | Gift angle ("darček, ktorý má zmysel") vs child-result angle (a student's game) vs unboxing of the gift pack | Cost per lead, then vouchers sold |
+| 14 Dec – 3 Jan | Open Day awareness | Four concern Reels (screen time, too early, maths, AI) to A and D | Cost per 50% video view; builds audience E |
+| 4 – 17 Jan | Open Day audience | A vs D vs F, with E always on | Cost per Open Day booking |
+| 11 – 31 Jan | Open Day creative and form | Reel vs carousel of dates; website form vs Meta instant form | Cost per booking and show-up rate |
+
+**Rules for every test.** One variable at a time. Equal daily budget per variant. Run each at least 7 days. Stop a variant early only if it has spent three times the average cost per lead without a lead. Judge on leads and bookings in Freshsales, not on clicks. Instant forms usually bring cheaper but weaker leads, so compare show-up rate, not form count.
+
+### Google Ads structure
+
+| Campaign | Keywords | Period | Landing page |
+| --- | --- | --- | --- |
+| Brand | logiscool, logiscool trnava (720 and 110 searches a month) | Always on | programovaniepredeti.sk |
+| Courses, Trnava | krúžok programovania trnava, kurz programovania pre deti, it krúžok pre deti trnava, ai kurz trnava | Always on; budget up from 4 Jan | Open Day booking |
+| Gift | darčekový poukaz, zážitkový darček pre deti, darček pre 8/10/12 ročného chlapca, vianočný darček pre deti | 23 Nov – 23 Dec | Voucher page |
+| Remarketing (display or Demand Gen) | Site visitors, video viewers | 7 Dec – 31 Jan | Voucher, then Open Day |
+
+The course keywords are where Search Console already shows impressions at positions 8–20, so ads cover the gap while SEO catches up. Limit the Gift campaign to the Trnava area; nationally those keywords would burn the budget on people who cannot attend. Test two ad messages in the Gift campaign: "darček pre dieťa, ktoré má všetko" against "darček pre malého hráča Minecraftu".
+
+### Budget split, as shares of whatever monthly amount you set
+
+| Period | Meta Ads | Google Ads | Main objective |
+| --- | --- | --- | --- |
+| 23 Nov – 23 Dec | 60% | 40% | Voucher sales |
+| 24 Dec – 3 Jan | 80% | 20% | Cheap video views for Open Day remarketing |
+| 4 – 31 Jan | 55% | 45% | Open Day bookings |
+
+These shares are a starting point from the manual's note that Facebook now converts better than Google for Logiscool; move money weekly towards the lower cost per booking.
+
+## Week-by-week plan
+
+Weeks run Monday to Sunday. Open Day dates below assume the 2nd semester starts in the week of 1 February; the manual asks for at least 12 Open Day slots, on weekdays and weekends, starting at least 4 weeks before the semester.
+
+### Phase 1: setup and voucher (16 Nov – 27 Dec)
+
+| Week | Web and Viventoo | Instagram and Facebook | Paid ads | E-mail, Freshsales, outreach |
+| --- | --- | --- | --- | --- |
+| 16–22 Nov: setup | Build the voucher page and /pre-skoly-a-firmy. Fix the enrolment badge. Confirm lead tracking. Viventoo: publish the Brainrot draft. | Filming afternoon 1. Post: trainer introduction; Reel: "Čo je Logiscool za 30 sekúnd". Teaser Story: "Tento rok máme darček aj pre Ježiška". | Build Meta and Google campaigns; install audiences; no spend yet beyond Brand. | Clean and segment Freshsales. Ask the master partner about the GIFT code, Slovak creatives and referral activation. Send the company offer (Christmas budgets close early). |
+| 23–29 Nov: voucher launch | Voucher page live. Viventoo: gift guide, "Darčeky pre deti, ktoré nie sú ďalšia hračka". | Launch Reel: voucher and gift pack unboxing. Carousel: how the voucher works in 4 steps. Pin both. | Meta audience test A/B/C starts. Google Gift campaign starts. | E-mail 1 to past leads and camp parents: the voucher. E-mail to current parents: voucher for siblings and friends, plus referral. Principals' e-mail goes out. |
+| 30 Nov – 6 Dec: Mikuláš | Viventoo: merged safety guide, "Bezpečnosť detí na internete". Google Business Profile: Offer post. | Mikuláš Reel from the classroom (HQ seasonal template). Student-project Reel. Story poll: "Čo si vaše dieťa praje od Mikuláša?" Optional: Mikulášska ukážková hodina on Sat 5 Dec. | Keep the test running to 6 Dec, then pick the winner. | Mikuláš greeting to all contacts with the voucher link. Library: agree a date for a free workshop. Follow-up calls to companies. |
+| 7–13 Dec: Christmas push | Viventoo: Centrum pre deti a rodiny story. Send the same story to local media. | Filming afternoon 2 at the last lessons. Concern Reel 1: screen time. Parent quote carousel (approved reviews only). | Meta creative test on the winning audience. Remarketing starts. | E-mail 2 to non-openers of e-mail 1, new subject line. Ask current parents for a Google review with a QR code at pickup. Hour of Code offer to schools, if the date fits. |
+| 14–20 Dec: last orders | Open Day section live with January dates. Viventoo: "Takto vyzerá ukážková hodina". | Reel: "Posledné dni na darček s balíčkom". Concern Reel 2: too early to start. Announce January Open Days; create Facebook Events. | Voucher ads to warm audience E with a deadline message. Open Day awareness video starts. | E-mail 3: last pickup day and the PDF option. Christmas greeting to schools, library and companies. Hand out Bring Your Buddy cards to students. |
+| 21–27 Dec: Christmas | Voucher page: switch the banner to "PDF poukaz do 5 minút" until 24 Dec. | Last pickup reminder on 21–22 Dec. Christmas greeting on 24 Dec. Then quiet. | Voucher ads end 23 Dec. Awareness video continues at low budget. | Christmas greeting e-mail on 23 Dec, no selling. Office closed message on WhatsApp and Google Business Profile hours. |
+
+### Phase 2: Open Days and 2nd semester (28 Dec – 31 Jan)
+
+| Week | Web and Viventoo | Instagram and Facebook | Paid ads | E-mail, Freshsales, outreach |
+| --- | --- | --- | --- | --- |
+| 28 Dec – 3 Jan: New Year | Update the Open Day post from January 2026 with the new dates. Viventoo: Skibidi draft. | PF 2027 post. Reel: "2026 v Logiscool Trnava" recap from existing footage. Concern Reel 3: maths. | Awareness video to audiences A and D. | E-mail to voucher buyers: how to redeem and book the first lesson. Prepare January sequences. |
+| 4–10 Jan: back to school | Homepage hero switches to Open Day booking. Viventoo: "Krúžok od februára: ako vybrať, aby pri ňom dieťa vydržalo" (editorial, no town in the title). | Reel: Open Day walk-through. Carousel of dates. Stories countdown. First Open Days in the holiday days 4–7 Jan and on Sat 9 Jan. | Open Day audience test A/D/F starts. Google Courses budget up. | E-mail 1: Open Day invitation to past leads, camp parents, party parents. Re-registration link to current parents. School flyers go out on 8 Jan. |
+| 11–17 Jan: Open Days | Camp 2027 waitlist live by 15 Jan. Viventoo: "Jarné prázdniny 2027: termíny a tipy" (1,900 searches a month, difficulty 0). | Concern Reel 4: AI. Reel of what children built at an Open Day. Recut summer footage for the camp waitlist. | Creative and form test. Remarketing to booking-page visitors. | Reminder 24 hours before each Open Day by e-mail and WhatsApp. Call every attendee the next day. Library workshop this week or next. |
+| 18–24 Jan: Bring Your Buddy | Timetable of February groups published. Google Business Profile: Event posts. | Bring Your Buddy Stories. Trainer answers parents' questions (Q&A sticker). "Posledné miesta v skupinách" only if true. | Shift budget to the winning audience and format. | Bring Your Buddy week in class. E-mail 2: remaining Open Day slots. Call past leads who opened but did not book. |
+| 25–31 Jan: last call | Badge switches to "Začíname vo februári". Viventoo: one article from the merged "what Logiscool is about" drafts. | Last-call Reel. Thank-you post for new families. Semester-end certificates post. | Last-call ads to warm audience only. Stop cold ads on 28 Jan. | E-mail 3: last call to Open Day attendees who have not registered. Referral prize draw announced. Review the campaign and move lost leads to the camp 2027 list. |
+
+### Standing weekly routine
+
+- **Monday:** check Freshsales leads by source, ad costs and bookings; move budget.
+- **Tuesday:** schedule the week's posts; publish the Viventoo article.
+- **Thursday:** send the week's e-mail; post on Google Business Profile.
+- **Daily:** answer new leads within one working day; the manual's Open Day checklist asks for contact on the day after the event.
+
+## Outreach: schools, library, companies
+
+The aim is to get the Open Day invitation and the voucher into newsletters that parents already trust, in exchange for something useful and free.
+
+| Partner | What we offer | What we ask | Reused material | Timing |
+| --- | --- | --- | --- | --- |
+| Primary schools in Trnava and nearby towns | A free interactive classroom presentation (online safety, kyberšikana) or a demo coding lesson; one half-year scholarship per school for a pupil the principal chooses | A paragraph and link in the parent newsletter or EduPage message; posters; flyers sent home on 8 Jan | HQ e-mail template for principals; HQ press release; the kyberšikana draft as proof; Adventure Book | E-mail 23–27 Nov; calls 30 Nov – 11 Dec; sessions in January |
+| Parent associations (ZRPŠ) | Open Day group slot for a whole class | Share the invitation in class chat groups | Open Day carousel, one-page PDF | 4–15 Jan |
+| Knižnica Juraja Fándlyho v Trnave | A free 60-minute coding workshop for children, held at the library | Listing in their programme, newsletter and Facebook; flyers at the children's desk | Demo lesson plan; safety guide as a parent handout | Agree in early December; hold 11–22 Jan |
+| Companies in the Trnava region | Vouchers as a Christmas benefit for employees' children; an Open Day slot reserved for one company's families; a short article for the intranet | A post on the intranet or in the HR newsletter; optionally a bulk voucher purchase | Voucher page; /pre-skoly-a-firmy; "what Logiscool is about" one-pager | Offer sent 16–20 Nov; follow-up by 4 Dec; second wave for Open Days 4–8 Jan |
+| Local media and parent groups | The Centrum pre deti a rodiny story; an expert comment on children and screens | A published article; a pinned post in Trnava parent groups | Viventoo draft; HQ press release | 7–11 Dec; again 11–15 Jan |
+
+### How to run it
+
+1. Build one list in Freshsales this week: every primary school within reach, the library, and 30 employers with the most parents on staff. Record a named contact for each.
+2. Send one short e-mail per group, written for that reader. For principals, lead with the free presentation, not with the courses.
+3. Give every partner its own link with a UTM tag (for example `utm_source=zs-nazov&utm_medium=partner`) so bookings can be traced back.
+4. Send partners a ready-to-paste newsletter paragraph and one image. If they have to write it, it will not go out.
+5. Schools that host a session can be offered the Logiscool Partner School badge described in the manual.
+
+### The partner newsletter
+
+One monthly e-mail for schools, the library and company contacts, built from Viventoo:
+
+- **December issue (send 1 Dec):** the safety guide, the Brainrot explainer, the voucher in one line, the free classroom presentation offer.
+- **January issue (send 11 Jan):** "Takto vyzerá ukážková hodina", Open Day dates, the spring-holiday dates article, the scholarship offer.
+
+Keep the ratio at three useful items to one offer. Partners forward helpful content; they do not forward adverts.
+
+## Freshsales
+
+Freshsales is where every lead from every channel lands, gets a source, and gets followed up; without it the audience tests above cannot be judged.
+
+### Pipeline stages
+
+1. New lead
+2. Contacted
+3. Open Day booked
+4. Open Day attended
+5. Registered for a course (or voucher sold)
+6. Lost, with a reason: time slot, price, age, no answer, chose something else
+
+### Fields to add to every contact and deal
+
+| Field | Values | Why |
+| --- | --- | --- |
+| Interest | Course, voucher, camp, party, school, company | Segmenting and reporting |
+| Source, medium, campaign, content | From the UTM tags on the form | Cost per lead by audience and creative |
+| Child's age band | 6–8, 9–11, 12–14, 15+ | Matching to a group; no child names needed |
+| Preferred days | Free text | Group planning |
+| Marketing consent | Yes or no, with date | Legal basis for e-mail and for ad audiences |
+
+Send all website forms into Freshsales automatically with the UTM values in hidden fields. Registrations still have to be entered in the Logiscool CRM; decide who does that and on which day.
+
+### Segments and what each receives
+
+| Segment | Voucher (Nov–Dec) | Open Day (Jan) | Other |
+| --- | --- | --- | --- |
+| Past leads who never enrolled | 3 e-mails | 3 e-mails and a call to openers | HQ recommends exactly this group for the gift offer |
+| Camp parents 2026, not in courses | 3 e-mails | 3 e-mails | Camp 2027 waitlist on 15 Jan |
+| Party parents | 1 e-mail | 1 e-mail | Nothing else |
+| Current course parents | 1 e-mail (siblings, friends) | Re-registration link | Referral, Bring Your Buddy, review request |
+| Open Day attendees, not registered | None | Call next day, e-mail on day 3, last call 25–31 Jan | Move to camp list if lost |
+| Voucher buyers | Confirmation and PDF | "How to redeem" on 28 Dec–3 Jan | Booking reminder in mid-January |
+| Schools, library, companies | Partner newsletter 1 Dec | Partner newsletter 11 Jan | Task per contact for calls |
+
+### Automations worth setting up
+
+- **New lead:** instant confirmation e-mail, a task for a call within one working day.
+- **Open Day booked:** confirmation with address and parking, reminder 24 hours before, WhatsApp on the morning of the event.
+- **Open Day attended:** task to call the next day; e-mail with the timetable and registration link on day 3.
+- **No show:** one e-mail offering two new dates.
+- **Voucher sold:** PDF voucher, pickup instructions, task to prepare the gift pack.
+- **Lost:** tag with the reason and add to the camp 2027 list if the parent agrees.
+
+E-mail only contacts with marketing consent, and upload a customer list to Meta only if the consent text covers it.
+
+## Measurement
+
+Report one page every Monday, from Freshsales first and the ad platforms second.
+
+| Measure | Source | Read it as |
+| --- | --- | --- |
+| Vouchers sold, by source | Freshsales | The result of Phase 1 |
+| Open Day bookings, by source and audience | Freshsales | The result of Phase 2, leading indicator |
+| Show-up rate | Freshsales stages 3 to 4 | Quality of leads and of reminders |
+| Registrations for February groups, against group capacity | Logiscool CRM | The business result |
+| Re-registration rate of current students | Logiscool CRM | Retention |
+| Referred bookings | UTM or referral link | Whether the referral track works |
+| Cost per lead and per booking, by audience and creative | Meta, Google, Freshsales | Where to move budget |
+| Partner bookings, by school or company | UTM tags | Which partnerships to repeat |
+| New Google reviews | Google Business Profile | Local trust |
+| Organic clicks and impressions per site | Search Console | Background trend only this season |
+
+## What else we can do
+
+- **Reviews.** The SEO brief found no course or party reviews. December pickups and the last lessons are the moment to ask, with a QR code on the desk.
+- **A local article with real demand.** "Kam s deťmi v Trnave cez vianočné prázdniny" on Viventoo: "kam s deťmi trnava" has 390 searches a month at difficulty 0. Publish by 14 December.
+- **Holiday-date articles.** "jarné prázdniny 2027" has 1,900 searches and "polročné prázdniny" 1,000, both at difficulty 0. One factual article each, with a camp CTA. Trnavský kraj has spring holidays on 1–5 March 2027 ([source](https://www.noviny.sk/slovensko/1252973-ziaci-opaet-sadaju-do-skolskych-lavic-velky-prehlad-datumov-prazdnin-maturit-ci-prijimaciek)).
+- **A one-day workshop on 1 February.** Polročné prázdniny fall on a Monday. It sits after the course campaign, so it does not break the HQ rule, and it is a natural place to redeem referral vouchers.
+- **Spring camp or mini workshops on 1–5 March.** Decide in January; announce in February.
+- **Trainers as faces.** Short introductions build more trust with parents than any graphic.
+- **Student showcase.** At the last lesson of the semester, parents watch the projects. It gives content, reviews and referrals in one hour.
+- **Voucher for a birthday party.** A small extension of the same page for partydeti.sk, if you publish a party price.
+- **Rank tracking and AI visibility.** Set up an OpenSEO tracker for the course, camp and party keywords now, so the spring results have a baseline.
+
+## To validate before launch
+
+- Start date of the 2nd semester and the list of beginner groups opening in February
+- Open Day dates: at least 12 slots, weekdays and weekends
+- Voucher: product, price, validity, any discount, pickup hours, last pickup day
+- Master partner: is the GIFT promotion active for Slovakia, which Slovak creatives exist, is the referral campaign with the 50% workshop voucher switched on
+- Monthly ad budget for Meta and Google
+- Lead tracking and the Freshsales form connection are live on all three service sites
+- Marketing consent wording: does it allow e-mail campaigns and ad audience uploads
+- Photo and video consent list for children
+- Which claims and network figures may be used in ads (open in the SEO brief)
+- Who films, who edits, who answers leads during 23 Dec – 3 Jan
+- Library contact and whether a workshop there is possible
+- Ghost analytics on Viventoo: it reports 0 views for all posts
+- Hour of Code date for December 2026, if you want to use it with schools
+
+## Sources
+
+- Logiscool manual pages linked in the reuse table, read through the Logiscool MCP on 13 Nov 2026; also [Business Activity Calendar](https://logiscool.atlassian.net/spaces/OPM/pages/1069187642/Business+Activity+Calendar) and [Operational tasks during a Season](https://logiscool.atlassian.net/spaces/OPM/pages/2107506704/Operational+tasks+during+a+Season).
+- Keyword volumes: OpenSEO, Slovakia, 13 Nov 2026. Search Console: programovaniepredeti.sk and viventoo.com, 10 Aug – 10 Nov 2026.
+- Viventoo post list: Ghost, 13 Nov 2026.
+- School holidays 2026/2027: [noviny.sk overview of the ministry's dates](https://www.noviny.sk/slovensko/1252973-ziaci-opaet-sadaju-do-skolskych-lavic-velky-prehlad-datumov-prazdnin-maturit-ci-prijimaciek).
+- SEO Implementation Brief for Logiscool Trnava, 12 Nov 2026 (project document).
+
+## Review, 15 November 2026
+
+The plan follows the project rules on domain intent, landing pages and tracking. These points need fixing before launch:
 
 | Issue | In the plan | Change |
 | --- | --- | --- |
@@ -79,27 +400,15 @@ The plan follows the project rules on domain intent, landing pages and tracking.
 | Canva templates | Only HQ manual kits are used | Map the partner's monthly Canva templates to dates |
 | Monthly plan format | Week-by-week tables | Add Canva template, owner and KPI columns |
 | Coupons | GIFT code and 50% referral workshop voucher only | Define sibling and referral codes with validity, target page and tracking after the owner confirms terms |
-| English version | Missing the 18-Reel creative section | Present only in the Slovak version |
+| English version | Missing the 18-Reel creative section | See the Slovak page |
 | Voucher redemption | Tied to the first instalment of the February beginner course | Show a clear validity period and allow a change of group on the voucher page |
 | Holiday-date articles | Viventoo articles on jarné and polročné prázdniny | Keep informational; CTA to the taborypredeti.sk waitlist |
 
 <Warning>
-The timeline is tight. Setup week starts on 16 November and the voucher page must be live by 23 November. The voucher product, price, validity, last pickup day and the monthly ad budget must be decided on 16–17 November.
+  Setup week starts on 16 November and the voucher page must be live by 23 November. The voucher product, price, validity, last pickup day and the monthly ad budget must be decided on 16–17 November.
 </Warning>
 
-## Open decisions
-
-- Start date of the 2nd semester and the beginner groups opening in February
-- Open Day dates: at least 12 slots, weekdays and weekends
-- Voucher product, price, validity, discount, pickup hours and last pickup day
-- From the master partner: whether GIFT is active in Slovakia, which Slovak creatives exist, and whether the referral campaign is on
-- Monthly budget for Meta Ads and Google Ads
-- Marketing consent wording for e-mail and ad audience uploads
-- Photo and video consent list for children
-- Who films, who edits and who answers leads on 23 Dec – 3 Jan
-- Ghost analytics on Viventoo, which reports 0 views for all posts
-
-## Who does what
+### Who does what
 
 | Through MCP | Manual |
 | --- | --- |
