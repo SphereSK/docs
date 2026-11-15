@@ -22,7 +22,14 @@
         "pages": [
           "mcp/connection-setup",
           "mcp/graphify-reference",
+          "mcp/ghost-reference",
           "mcp/changelog"
+        ]
+      },
+      {
+        "group": "Content",
+        "pages": [
+          "content/viventoo-articles"
         ]
       }
     ],

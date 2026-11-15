@@ -12,6 +12,16 @@ Add new entries at the top.
 
 ## 15 November 2026
 
+### Ghost reference added
+
+A new page, [Ghost reference](/mcp/ghost-reference), records the Ghost MCP tools exposed through the portal, the SEO and social fields, HTML card handling and the image upload limit.
+
+Observed in a client session on this date:
+
+- `ghost_post_update` saved `meta_title`, `meta_description`, `og_title` and `og_description` on a published post and returned the saved values.
+- A post body sent as `html` was converted to editor blocks. Markup wrapped in HTML card markers was kept unchanged.
+- `ghost_image_upload` failed with `ENOENT` for a file path from the client's workspace, because the server resolves `file_path` on its own file system. A change to accept base64 content or a URL is proposed and not implemented.
+
 ### Documentation restructured
 
 The single guide "Connect an existing MCP server to ChatGPT — Version 2" was split into three pages: a generic connection setup, a Graphify reference and this changelog. Verification commands, a terms table and a separate origin-protection section were added to the setup page.

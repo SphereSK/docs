@@ -1,0 +1,145 @@
+---
+title: "Update a Viventoo article with OpenSEO, Logiscool and Ghost"
+sidebarTitle: "Viventoo articles"
+description: "Workflow for reviewing and updating a Viventoo article: keyword check in OpenSEO, facts from the Logiscool knowledge base and changes saved through Ghost."
+keywords:
+  - "Viventoo"
+  - "Logiscool Trnava"
+  - "OpenSEO"
+  - "Ghost"
+  - "meta title"
+  - "meta description"
+  - "FAQ"
+  - "UTM"
+---
+
+Viventoo articles are reviewed and updated with three MCP servers: OpenSEO for keyword data and project rules, the Logiscool knowledge base for facts, and Ghost for saving the changes. This page describes the workflow and the rules that apply to every article, based on the Viventoo project context in OpenSEO and on a session from 15 November 2026.
+
+For the Ghost tools and their limits, see [Ghost reference](/mcp/ghost-reference).
+
+## Role of Viventoo
+
+Viventoo (viventoo.com, Ghost) is the informational parent hub of the Logiscool Trnava franchise. It answers parents' questions and passes readers to the registration sites. Each domain owns one search intent.
+
+| Domain | Owns |
+| --- | --- |
+| programovaniepredeti.sk | Year-round courses, the free demo lesson and enrollment |
+| taborypredeti.sk | Summer camps |
+| partydeti.sk | Birthday parties |
+| viventoo.com | Informational articles only |
+
+<Warning>
+  Viventoo must not target transactional keywords that belong to the registration sites. Check for cannibalization against the three registration sites before you add an article, and prefer updating an existing post.
+</Warning>
+
+## Workflow
+
+<Steps>
+  <Step title="Read the project context">
+    Call `get_project_context` for the Viventoo project in OpenSEO. It holds the positioning, the writing preferences, the competitors and the research log. Check the research log before you buy the same research again.
+  </Step>
+  <Step title="Read the live post">
+    Call `ghost_post_get` with the post slug and `formats: "html"`. Note which SEO fields are empty, whether a feature image is set and how the call-to-action snippet is written.
+  </Step>
+  <Step title="Check keyword demand">
+    Call `get_keyword_metrics` for the candidate keywords. Choose one primary keyword for the post and confirm that it is informational.
+  </Step>
+  <Step title="Check the facts">
+    Search the Logiscool knowledge base with `search_knowledge` and read the matching pages with `get_page` or `get_pages`. Where the Trnava school does something differently, the owner's answer wins. Record such decisions in [Confirmed facts](#confirmed-facts-demo-lesson).
+  </Step>
+  <Step title="Propose the changes">
+    Show the owner the meta title, meta description, social title and description, and the full Slovak text of every new or changed section. Wait for approval.
+  </Step>
+  <Step title="Save through Ghost">
+    Save the SEO fields and the body with `ghost_post_update`. The update applies to a published post immediately, so confirm the saved values in the response.
+  </Step>
+  <Step title="Check the rendered page">
+    Open the public page and check spacing, the feature image and the call-to-action box.
+  </Step>
+</Steps>
+
+## Writing rules
+
+These rules come from the Viventoo project context in OpenSEO.
+
+- Write the final content in Slovak with correct diacritics, in a natural and warm tone for parents of children aged 6 to 18. Do not translate literally from English.
+- Use one primary keyword per post, with a title, meta description, H1, H2 structure, image alt text and internal links to related Viventoo posts.
+- Give direct answers and add an FAQ block, so that the article works in AI search.
+- Take facts about courses, ages, prices, dates, camps and parties only from the Logiscool knowledge base. Do not invent them.
+- For Python courses, write "certifikát o absolvovaní" per semester. Use "diplom" only for the Logiscool Python Exam.
+- Describe the network size as "35+ krajín".
+- Work in drafts first. Publish only after the owner approves.
+
+## Call-to-action snippet and UTM
+
+Every article ends with the `lsc-cta` snippet that matches its topic and links to the matching registration site.
+
+| Snippet | Target | `utm_campaign` |
+| --- | --- | --- |
+| CTA ukážková hodina | programovaniepredeti.sk | `snippet_ukazkova` |
+| CTA tábory | taborypredeti.sk | `snippet_tabory` |
+| CTA oslavy | partydeti.sk | `snippet_oslavy` |
+
+The link carries these parameters:
+
+```text
+utm_source=viventoo&utm_medium=referral&utm_campaign=<campaign>&utm_content=<slug>
+```
+
+`utm_content` is the post slug. On 15 November 2026 the demo lesson article was missing `utm_content`, so check this parameter on every post you touch.
+
+In the post body, keep the snippet inside HTML card markers. See [Updating post content with HTML](/mcp/ghost-reference#updating-post-content-with-html).
+
+## Searching the Logiscool knowledge base
+
+On 15 November 2026, Slovak queries such as "ukážková hodina" returned no results. English terms from the knowledge base returned the relevant pages: "Open Day" and "Demo Lessons". Search with the English term first.
+
+Cite the source URL of every knowledge base page you use.
+
+## Confirmed facts: demo lesson
+
+The owner confirmed these facts for Logiscool Trnava on 15 November 2026. Use them in articles about the demo lesson (ukážková hodina).
+
+| Topic | Use in articles | Note |
+| --- | --- | --- |
+| Age groups | Two groups: 1.–4. ročník and 5.–8. ročník | The knowledge base lists a different split. The owner's two groups apply |
+| Duration | About 45 minutes | The owner states 30 to 45 minutes. The knowledge base states 40 to 45 minutes |
+| Price | Free, without commitment | |
+| What to bring | Nothing, for children and for parents | |
+| Certificate | Each child gets a certificate for the first game | Confirmed for Trnava |
+| MyLogiscool | 30 days of access after the lesson | Confirmed for Trnava |
+| Format | Children build their first game with a trainer while parents get their own session. At the end the children show the game to their parents | From the knowledge base |
+
+## Keyword findings: demo lesson
+
+OpenSEO, Slovakia, 15 November 2026:
+
+| Keyword | Monthly searches |
+| --- | --- |
+| logiscool | 720 |
+| programovanie pre deti | 210 |
+| logiscool trnava | 110 |
+| ukážková hodina and its variants | No measurable volume |
+
+Because only the brand terms have demand, the meta title of the demo lesson article starts with "Ukážková hodina Logiscool Trnava" and uses the remaining space for the reason to attend.
+
+## Meta fields
+
+The demo lesson article uses a 54-character meta title and a meta description of about 147 characters. Keep the main benefit and the brand term in the meta title, and state the practical facts (duration, price, age) in the description.
+
+Set the social title and description (`og_title`, `og_description`) separately. They can be longer and more emotional than the search fields.
+
+## Spacing in the article body
+
+The site theme adds large margins above headings. An FAQ with one heading per question therefore looks loose. To tighten it, put the FAQ and similar lists in an HTML card and set the margins with inline `style` attributes. The gaps above the main section headings come from the theme and cannot be changed from the post.
+
+Avoid empty paragraphs, empty headings and horizontal dividers. They add white space.
+
+## Feature image
+
+A remote client cannot upload an image through the Ghost MCP server. Create the image, then upload it in Ghost Admin with **Add feature image**. After that, set `feature_image_alt` and `og_image` through `ghost_post_update`. See [Image upload limit](/mcp/ghost-reference#image-upload-limit).
+
+## Sources
+
+- [Open Days - Courses](https://logiscool.atlassian.net/spaces/CISMM/pages/2105280633/Open+Days+-+Courses) (Logiscool knowledge base)
+- [Open Days / Demo Lessons](https://logiscool.atlassian.net/spaces/EDU/pages/224002493/Open+Days+Demo+Lessons) (Logiscool knowledge base)
