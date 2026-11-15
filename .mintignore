@@ -5,3 +5,8 @@
 # Draft content
 drafts/
 *.draft.mdx
+
+# Agent instructions are repository policy, not published site pages.
+AGENTS.md
+CLAUDE.md
+.mintlify/

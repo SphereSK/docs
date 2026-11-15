@@ -1,7 +1,7 @@
 ---
-title: "Ghost MCP reference: tools, limits and image uploads"
+title: "Ghost MCP reference: metadata, images and snippets"
 sidebarTitle: "Ghost reference"
-description: "Observed behavior of the Ghost MCP server behind the Datament portal: available tools, SEO fields, HTML handling and the image upload limit."
+description: "Use the deployed Ghost MCP fork for metadata, excerpts, code injection, URL uploads and saved snippets, with verified contracts and clear write boundaries."
 keywords:
   - "Ghost"
   - "MCP"
@@ -11,13 +11,13 @@ keywords:
   - "HTML card"
 ---
 
-The Ghost MCP server lets an AI client read and edit posts on a Ghost site through the Datament MCP portal. This page records what the server was observed to do from a connected client on 15 November 2026 (Europe/Bratislava), including one limit that blocks image uploads from remote clients.
+The Ghost MCP server lets authorized clients work with Ghost content through the Datament portal. The deployed fork at commit [faedd43](https://github.com/SphereSK/ghst/commit/faedd43bf35928ec881393de215c695be4bf51c2) exposes **37 tools** for the configured `posts,pages,tags,site,stats` groups. This page was updated after read-only server verification on 15 November 2026 (Europe/Bratislava).
 
-These are dated observations from client sessions, not a description of the server's source code. For the generic steps to connect a server, see [Connection setup](/mcp/connection-setup). For dated records, see the [Changelog](/mcp/changelog).
+The matching build passed 291 offline tests. New write paths were tested with mocks, not live content. Do not publish, email, change posts/pages or run live draft tests without explicit user authorization. See the [deployment record](/mcp/changes/2026-11-15-ghost-mcp) for evidence and limits, and [Connection setup](/mcp/connection-setup) for the generic connection workflow.
 
 ## Tools exposed through the portal
 
-The portal exposes the Ghost tools with the prefix `ghost-mcp_`. The following tool names were listed by the client.
+The portal exposes the Ghost tools with the prefix `ghost-mcp_`. Client definitions can lag behind deployment; the following tools were verified directly against the running server.
 
 | Area | Tools |
 | --- | --- |
@@ -26,23 +26,42 @@ The portal exposes the Ghost tools with the prefix `ghost-mcp_`. The following t
 | Tags | `ghost_tag_list`, `ghost_tag_get`, `ghost_tag_create`, `ghost_tag_update`, `ghost_tag_delete` |
 | Media and themes | `ghost_image_upload`, `ghost_theme_upload` |
 | Site | `ghost_site_info`, `ghost_site_list`, `ghost_webhook_create` |
+| Saved snippets | `ghost_snippet_list`, `ghost_snippet_get` |
 | Analytics | `ghost_stats_overview`, `ghost_stats_web`, `ghost_stats_web_table`, `ghost_stats_growth`, `ghost_stats_posts`, `ghost_stats_post`, `ghost_stats_post_web`, `ghost_stats_post_growth`, `ghost_stats_post_referrers`, `ghost_stats_post_newsletter`, `ghost_stats_email`, `ghost_stats_email_clicks`, `ghost_stats_email_subscribers` |
 
-Most tools accept an optional `site` parameter that selects a configured site alias. `ghost_site_list` lists the aliases without credentials.
+Most tools accept an optional `site` parameter that selects a configured site alias. `ghost_site_list` lists saved aliases without credentials and adds a sanitized `connection` descriptor for direct/environment credentials. An empty `sites` array can coexist with a working connection; omit `site` when no selectable alias exists.
 
-## SEO and social fields
+## Metadata and slug updates
 
-`ghost_post_update` and `ghost_post_create` accept these fields, and the update call returns the saved values in its response:
+Post and page create/update tools expose these nine SEO fields:
 
-- `meta_title` and `meta_description`
-- `og_title`, `og_description` and `og_image`
-- `twitter_title`, `twitter_description` and `twitter_image`
+- `meta_title`, `meta_description`
+- `og_title`, `og_description`, `og_image`
+- `twitter_title`, `twitter_description`, `twitter_image`
 - `canonical_url`
-- `feature_image`, `feature_image_alt` and `feature_image_caption`
 
-`feature_image`, `og_image` and `twitter_image` take a URL. They do not take a file.
+They also accept `custom_excerpt` (up to 300 characters) and `codeinjection_head` / `codeinjection_foot` (up to 65,535 characters each). SEO title limits are 300 characters, descriptions 500, and HTTP(S) URL fields 2,000. These are input limits, not recommended search-result lengths.
 
-An update applies to a published post immediately. Read the response to confirm the saved values before you report the change as done.
+Omit a field to preserve it; send `null` to clear its override. A metadata-only request sends the selected fields and the current `updated_at` collision timestamp, not the content, status, slug or unrelated metadata. SEO/injection post updates return conflicts rather than automatically retrying over a newer edit.
+
+`slug` remains the existing lookup slug on updates. Set `new_slug` to rename explicitly. Post creation now accepts `slug`, as page creation already did. A rename changes the public URL; this tool does not configure redirects.
+
+Post tools also retain `feature_image`, `feature_image_alt` and `feature_image_caption`. Image fields take URLs. An explicitly supplied code-injection value replaces that whole field; preserve any existing code you intend to keep. For JSON-LD, include the script element and inspect existing theme-generated structured data to avoid duplicates.
+
+## Compact reads and pagination
+
+Post/page list and get tools accept `fields` and `formats` (`html`, `lexical` or `html,lexical`). Defaults and response envelopes remain compatible. List limits remain numeric, up to 100; follow `meta.pagination.next` instead of assuming one page is complete.
+
+```json
+{
+  "limit": 10,
+  "page": 1,
+  "status": "published",
+  "fields": "id,slug,status,updated_at,meta_title,meta_description"
+}
+```
+
+The list `status` argument now composes with the Ghost filter expression. Direct production tests returned only requested fields and distinct results for pages 1 and 2. Verify rendered public HTML separately: a null API override may produce a theme fallback rather than a missing meta tag.
 
 ## Updating post content with HTML
 
@@ -62,30 +81,32 @@ Content between the markers was stored as an HTML card with its classes and inli
   Sending `html` replaces the whole post body. Read the post first with `ghost_post_get` and `formats: "html"`, then send the complete new body, including every existing HTML card.
 </Warning>
 
-## Image upload limit
+## Upload images from a path or URL
 
-`ghost_image_upload` takes a required `file_path` and the optional parameters `purpose`, `ref` and `site`.
+`ghost_image_upload` accepts exactly one source:
 
-The server resolves `file_path` on its own file system. A client that runs elsewhere, such as a cloud AI session, cannot place a file there. An upload with a path from the client's workspace failed with this error:
+- `file_path`: a readable path on the **MCP server**, not a path on your remote client.
+- `image_url`: a direct public HTTPS URL. The server downloads bytes and uploads them to Ghost as multipart data.
 
-```text
-ENOENT: no such file or directory, open '/home/claude/header/ukazkova-hodina-logiscool-trnava.jpg'
-```
+Optional `purpose`, `ref` and `site` remain available. URL downloads allow PNG, JPEG, GIF and WebP, with a 10 MiB limit and a 15-second request deadline. The implementation rejects redirects, embedded credentials, nonstandard ports, private/reserved destinations and IPv6-only hosts, and pins validated public IPv4 DNS results. Ghost credentials are never sent to the source image host.
 
-As a result, a remote client cannot upload a new image or set a new header image by itself.
+For a redirecting URL, use the final direct image URL. Unsupported formats need a separate conversion or local-file workflow. Uploading does not automatically insert the image into a post. Schema and upload payload behavior passed offline tests; no live upload was performed in the deployment check.
 
-### Workarounds
+## Reuse saved editor snippets
 
-- **Upload in Ghost Admin.** Open the post, select **Add feature image** and choose the file. The client can then set `feature_image_alt` and `og_image` through `ghost_post_update`.
-- **Use a public URL.** If the image is already reachable at a public URL, set `feature_image` to that URL with `ghost_post_update`.
+`ghost_snippet_list` returns paginated names and IDs without large content. `ghost_snippet_get` returns a saved snippet in its native format, defaulting to `formats: "lexical"`. Use `"mobiledoc"` explicitly for legacy content. HTML is not a supported snippet format on the verified Ghost deployment.
 
-### Proposed change
+The three saved CTA snippets were retrieved successfully. Each contains a clipboard-shaped Lexical object with `namespace` and `nodes`. Their default Mobiledoc responses were empty placeholders, not evidence of missing content.
 
-<Note>
-  This change is a proposal. It is not implemented.
-</Note>
+Post/page create/update accepts a JSON-string `lexical` document as an alternative to `html`. To compose a new document from a snippet, inspect its format and preserve the saved nodes inside a Lexical root, as shown in the [source README](https://github.com/SphereSK/ghst/blob/faedd43bf35928ec881393de215c695be4bf51c2/README.md). Do not send both content formats.
 
-Extend `ghost_image_upload` so that it accepts the image without a server-side path, for example as base64 content or as a URL that the server fetches. A remote client could then upload an image and set it as `feature_image` in the same session.
+<Warning>
+  A `lexical` update replaces the body just as `html` does. Retrieve and preserve the existing document when composing an authorized insertion. Snippet read tools do not insert content or create, edit or delete saved snippets.
+</Warning>
+
+## Server discovery versus client discovery
+
+The deployed server passed a direct MCP `tools/list` check for 37 tools and every new input field. The existing chat still exposed older connector definitions. Check the Portal/client tool schemas independently; reconnecting a client is not proof that its definitions refreshed.
 
 ## Deleting content
 

@@ -23,7 +23,9 @@
           "mcp/connection-setup",
           "mcp/graphify-reference",
           "mcp/ghost-reference",
-          "mcp/changelog"
+          "mcp/changelog",
+          "mcp/agent-change-tracking",
+          "mcp/changes/2026-11-15-ghost-mcp"
         ]
       },
       {

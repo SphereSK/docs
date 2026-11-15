@@ -12,6 +12,27 @@ Add new entries at the top.
 
 ## 15 November 2026
 
+### Ghost fork deployed and verified
+
+The user deployed the tested Ghost MCP fork through two revisions:
+[0539b54](https://github.com/SphereSK/ghst/commit/0539b544cfa1e5cb0537c16f57b4501fdb0aef14)
+and [faedd43](https://github.com/SphereSK/ghst/commit/faedd43bf35928ec881393de215c695be4bf51c2).
+The final build exposes 37 tools. Its 291 offline tests passed, and deployed bundle
+identity, authentication, compact reads, pagination and all three saved snippets
+were checked read-only. Live write behavior was not tested in this implementation session.
+
+See the [complete change record](/mcp/changes/2026-11-15-ghost-mcp) and updated
+[Ghost reference](/mcp/ghost-reference). This deployment supersedes the earlier
+image-upload proposal below; it does not erase the earlier observations.
+
+### Shared documentation workflow prepared
+
+Added [agent change tracking](/mcp/agent-change-tracking), shared repository rules,
+a documentation PR template and a proposed validation workflow. The selected
+policy is documentation PRs for review. Cross-repository Autopilot activation and
+installation of rules in other agent clients remain pending. MemPalace integration
+was not implemented in this session.
+
 ### Winter campaign 2026/27 summary added
 
 A new page, [Winter campaign 2026/27](/content/winter-campaign-2026-27), summarises the Logiscool Trnava winter campaign plan dated 13 November 2026 and records the review findings, open decisions, and the split between MCP and manual work. The full plan was saved to the claude.ai project **SEO - Logiscool** as `claude/winter-campaign-plan-2026-27.md`.

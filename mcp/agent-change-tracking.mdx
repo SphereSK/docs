@@ -1,0 +1,109 @@
+---
+title: "Track changes across agents"
+sidebarTitle: "Agent workflow"
+description: "Keep agent work traceable with source commits, dated change records, deployment evidence and reviewed Mintlify documentation across multiple repositories."
+keywords: ["agents", "documentation", "Mintlify", "Graphify", "MemPalace", "change tracking"]
+---
+
+Use the Datament documentation repository as the reviewed record of what changed and why. Link that record to source commits and deployment evidence so an agent can resume work without relying on a previous chat's memory.
+
+## Give each system one role
+
+| System | Role in this workflow | What it does not establish |
+| --- | --- | --- |
+| GitHub source repositories | Exact code, commits, branches, PRs and automated checks | A commit alone does not prove deployment |
+| Mintlify / `SphereSK/docs` | Current reference pages, decisions, runbooks and dated change records | A published explanation is not proof of a live test |
+| Graphify over MCP | Code relationships, impact analysis and source exploration | A graph is not a complete deployment or decision log |
+| MemPalace, after setup | Recall of decisions, preferences and links to authoritative records | Memory is not the source of truth for current production state |
+| Chats and agent handoffs | Working context and coordination | Important conclusions must be promoted into the reviewed record |
+
+MemPalace is planned for a later session. This page defines its intended role, not a working integration.
+
+## Definition of done
+
+For each material code, configuration or operational change, capture:
+
+1. **Identity:** a stable change ID, affected project, agent/owner and date/timezone.
+2. **Reason and outcome:** the problem and resulting behavior.
+3. **Source:** immutable commit/PR links, or a versioned configuration reference when no code changed.
+4. **Validation:** commands or checks actually run, results and important untested behavior.
+5. **Deployment:** separately record proposed, implemented, tested, deployed, verified or reverted status, with evidence for each claim.
+6. **Documentation:** update the standing reference and add a dated record, or explicitly explain why no documentation change is needed.
+7. **Handoff:** the docs PR, remaining work and rollback reference.
+
+Write one record per logical change under `mcp/changes/`. Link it from the changelog. Do not paste a whole chat or raw terminal log into documentation.
+
+The [Ghost change record](/mcp/changes/2026-11-15-ghost-mcp) is the first worked example of this format.
+
+## Shared agent rule
+
+The repository policy is in `.mintlify/AGENTS.md`, loaded by the root `AGENTS.md`. `CLAUDE.md` points Claude Code to the same policy. The instruction files are excluded from Mintlify publication.
+
+For each additional source repository, adopt this rule in its own agent instructions after reviewing its existing rules:
+
+```text
+Before marking a material change complete:
+- Record the source commit/config revision, reason, tests, deployment status and next action.
+- Update the relevant reference and dated change record in SphereSK/docs.
+- Open or update a documentation PR for review and return its URL.
+- Never infer deployed from pushed or tested; distinguish mocked and live checks.
+- Reuse the same change ID/PR for overlapping agent work; preserve prior evidence.
+- If docs access is unavailable, save a local handoff and state docs sync is pending.
+- Never auto-merge, auto-publish, expose secrets or alter live content to document it.
+```
+
+This rule is active for agents that load this docs repository's instructions. It is **not automatically installed in every source repository, client or agent**. Mintlify's editor agent uses its editor AI instructions; copy the shared rule there as well. Source-repository CI and branch rules are a separate enforcement layer.
+
+## Coordinate multiple agents
+
+Use separate branches and record files for independent changes. Deduplicate by change ID and source commit, not by chat title. Before updating a shared record, read its latest remote version and any open docs PR. If evidence conflicts, note the discrepancy and resolve it rather than replacing another agent's conclusion silently.
+
+Keep the deployed version separate from the latest branch head. Documentation-only changes can advance a branch without changing the running service. Direct pushes or manual deployments also need records because a merged-PR trigger might never see them.
+
+## Checks included with this documentation change
+
+The proposed `Docs checks` GitHub Actions workflow validates MDX/configuration and internal links on docs pull requests. It uses read-only repository permissions and does not deploy, publish or contact production services. The PR template asks for source evidence, test results and deployment status.
+
+These checks validate documentation structure. They do not prove factual accuracy or force another repository to submit a docs PR. Make the check required through repository branch rules only after the first successful run; branch protection was not changed in this setup.
+
+## Enable automatic documentation PRs
+
+The selected policy is **open PRs for review**, with auto-merge and direct publishing off. Dashboard activation has not been performed. A read-only Mintlify check on 15 November 2026 confirmed that `in-ideas` uses `SphereSK/docs` on `main`, reports the Hobby plan, and rejects Workflows access with `entitlement_required`. The connector is now available, but this account does not currently expose that workflow capability.
+
+Use agent-created documentation PRs and GitHub validation on the current plan. The optional dashboard automation paths below require the relevant entitlement; do not treat them as configured.
+
+### Preferred: Autopilot
+
+Mintlify currently offers Autopilot on Pro or Enterprise. In the [Autopilot dashboard](https://app.mintlify.com/products/autopilot):
+
+1. Confirm that `SphereSK/docs` is the documentation source.
+2. Connect `SphereSK/ghst` and `SphereSK/graphify-gateway` as additional source repositories, with the GitHub App installed where required.
+3. Enable Autopilot and keep **Auto-merge changes** off.
+4. Give it the shared rule above and tell it to open or update docs PRs for review.
+5. Check a real proposed PR for correct source links, deployment status and absence of secrets.
+
+Autopilot's code-change discovery is not a substitute for manually recording branch-based deployments like today's Ghost rollout. See [Mintlify's Autopilot documentation](https://www.mintlify.com/docs/autopilot).
+
+### Optional: explicit automation or deployment hook
+
+Mintlify's custom automations currently require Enterprise. A **Code change** trigger runs on merged source PRs; a **Content update** trigger watches documentation-repository pushes. They are different events. See [Automation triggers](https://www.mintlify.com/docs/automations/index).
+
+If you need a successful-deployment hook, first configure the authenticated automation in Mintlify, then connect it to the actual successful deployment job. Do not trigger publication merely because a source push occurred. No webhook, credential, paid plan or automatic publication was configured by this documentation PR.
+
+Use this prompt for the documentation agent:
+
+```text
+Maintain SphereSK/docs from verified source changes and deployment evidence.
+1. Read .mintlify/AGENTS.md, the changed source and existing reference/dated records.
+2. Find an existing docs PR for the same change ID or commit; update it if present.
+3. Update only affected reference pages and add or update the corresponding dated record.
+4. Separate implemented/tested/deployed/verified states; do not infer deployment from a merge.
+5. Link source commits, tests and evidence. Preserve earlier records and never copy secrets.
+6. Run Mintlify validation and link checks.
+7. Open a PR for human review. Never auto-merge or publish. If no material docs change is
+   needed, report that reason without creating an empty PR.
+```
+
+## What remains to activate
+
+Merge the reviewed documentation PR to install the files on the documentation branch. Then enable Autopilot if the project's plan supports it, and adopt the shared rule in each source repository/client. These activation steps are separate from writing this reference; verify each one before reporting it complete.

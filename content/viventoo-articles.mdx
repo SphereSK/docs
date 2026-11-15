@@ -51,7 +51,7 @@ Viventoo (viventoo.com, Ghost) is the informational parent hub of the Logiscool 
     Show the owner the meta title, meta description, social title and description, and the full Slovak text of every new or changed section. Wait for approval.
   </Step>
   <Step title="Save through Ghost">
-    Save the SEO fields and the body with `ghost_post_update`. The update applies to a published post immediately, so confirm the saved values in the response.
+    After explicit approval, save only the approved fields with `ghost_post_update`. For metadata-only changes, omit the body, status, slug and unrelated metadata. Changes to a published post apply immediately; read the post again to verify the saved values and that unrelated fields were preserved.
   </Step>
   <Step title="Check the rendered page">
     Open the public page and check spacing, the feature image and the call-to-action box.
@@ -68,7 +68,7 @@ These rules come from the Viventoo project context in OpenSEO.
 - Take facts about courses, ages, prices, dates, camps and parties only from the Logiscool knowledge base. Do not invent them.
 - For Python courses, write "certifikát o absolvovaní" per semester. Use "diplom" only for the Logiscool Python Exam.
 - Describe the network size as "35+ krajín".
-- Work in drafts first. Publish only after the owner approves.
+- Prepare proposed changes without live writes. Creating or changing a live draft also requires explicit approval. Publish only after the owner approves.
 
 ## Call-to-action snippet and UTM
 
@@ -88,7 +88,9 @@ utm_source=viventoo&utm_medium=referral&utm_campaign=<campaign>&utm_content=<slu
 
 `utm_content` is the post slug. On 15 November 2026 the demo lesson article was missing `utm_content`, so check this parameter on every post you touch.
 
-In the post body, keep the snippet inside HTML card markers. See [Updating post content with HTML](/mcp/ghost-reference#updating-post-content-with-html).
+You can inspect saved snippets read-only with `ghost_snippet_list` and `ghost_snippet_get`; see [Saved editor snippets](/mcp/ghost-reference#reuse-saved-editor-snippets). Retrieving a snippet does not insert it. Any insertion requires approval and preservation of the existing body.
+
+When using an HTML representation in the post body, keep the snippet inside HTML card markers. See [Updating post content with HTML](/mcp/ghost-reference#updating-post-content-with-html).
 
 ## Searching the Logiscool knowledge base
 
@@ -137,7 +139,9 @@ Avoid empty paragraphs, empty headings and horizontal dividers. They add white s
 
 ## Feature image
 
-A remote client cannot upload an image through the Ghost MCP server. Create the image, then upload it in Ghost Admin with **Add feature image**. After that, set `feature_image_alt` and `og_image` through `ghost_post_update`. See [Image upload limit](/mcp/ghost-reference#image-upload-limit).
+The deployed fork accepts a direct public HTTPS `image_url` through `ghost_image_upload`. A `file_path` still refers to a file on the MCP server, not on the client. Check the supported formats and download restrictions in [Image uploads](/mcp/ghost-reference#upload-images-from-a-path-or-url). Ghost Admin remains an alternative.
+
+Obtain explicit approval before a live upload or post update. Uploading alone does not attach the image to a post. Set only the approved image fields afterward. URL upload behavior passed offline tests; the deployment audit did not perform a live upload.
 
 ## Sources
 
