@@ -12,6 +12,10 @@ Add new entries at the top.
 
 ## 15 November 2026
 
+### Visual MCP onboarding guide added
+
+The [Connection setup](/mcp/connection-setup) runbook now includes four editable Mermaid diagrams: the MCP traffic architecture, a new-server mind map, a Docker-versus-host-loopback routing decision tree, and an authentication sequence showing the Cloudflare Access Service Auth failure and application Bearer boundary. It also includes a screen-by-screen guide for eight redacted Cloudflare and Dokploy screenshots, with recommended asset paths and Mintlify Frame examples. **Actual administrative screenshots were not uploaded or fabricated.** The documentation PR remains a draft, and no production services or security settings were changed.
+
 ### Reusable MCP onboarding runbook expanded
 
 The [Connection setup](/mcp/connection-setup) page now contains a **token-first 12-step onboarding procedure for future Datament MCP servers**, reflecting the MemPalace deployment lessons: create a dedicated Cloudflare service token, create a Service Auth policy, **attach it to the correct upstream Access application**, deploy and secure the MCP backend, configure the Dokploy/Traefik route and existing tunnel, test Access and optional application Bearer separately, register and synchronize the server in the existing MCP Portal, assign authorized tools, refresh clients, and record acceptance/rollback.
