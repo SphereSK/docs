@@ -12,6 +12,12 @@ Add new entries at the top.
 
 ## 15 November 2026
 
+### Reusable MCP onboarding runbook expanded
+
+The [Connection setup](/mcp/connection-setup) page now contains a **token-first 12-step onboarding procedure for future Datament MCP servers**, reflecting the MemPalace deployment lessons: create a dedicated Cloudflare service token, create a Service Auth policy, **attach it to the correct upstream Access application**, deploy and secure the MCP backend, configure the Dokploy/Traefik route and existing tunnel, test Access and optional application Bearer separately, register and synchronize the server in the existing MCP Portal, assign authorized tools, refresh clients, and record acceptance/rollback.
+
+The guide explicitly differentiates Docker-networked MCP routing from the MemPalace-style host-loopback/Caddy bridge, the **Traefik target root URL** from the **full MCP upstream path**, and service-token-to-upstream credentials from portal user/client authentication. It includes a dated worked MemPalace example and links to the full MemPalace reference. No production routing, tokens, Access policies, clients or MCP processes were modified by this documentation change.
+
 ### MemPalace bridge deployed and Cloudflare Access verified; read-only rollout pending
 
 Updated [MemPalace reference](/mcp/mempalace-reference) with the operator-verified 15 November deployment and the exact ordered remaining implementation and acceptance gates.
