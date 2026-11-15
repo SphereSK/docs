@@ -1,0 +1,126 @@
+---
+title: "MemPalace MCP reference"
+sidebarTitle: "MemPalace reference"
+description: "MemPalace architecture, security and operations baseline for Datament, with verified observations, integration gaps, and safe deployment checks."
+keywords:
+  - "MemPalace"
+  - "MCP"
+  - "memory"
+  - "read-only"
+  - "operations"
+---
+
+MemPalace provides persistent memory and recall for AI agents. This reference separates the reported local Datament installation from the upstream MemPalace capabilities and the not-yet-verified Cloudflare MCP integration. It does not expose memory records, credentials or private infrastructure configuration.
+
+## Evidence and current status
+
+Evidence checked on **15 November 2026 (Europe/Bratislava)**:
+
+| Area | Status | Evidence and limitation |
+| --- | --- | --- |
+| Local installation | **Reported, not independently checked in this documentation session** | The previous operator handoff described a populated local palace, local MemPalace CLI, an existing PM2 MCP proxy and refresh jobs. No server shell or authenticated local MemPalace status output was available to this review. |
+| MemPalace HTTP MCP implementation | **Supported upstream; local runtime unverified** | The [upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md) documents `mempalace serve`, HTTP transport, bearer-token authentication, `--read-only` and health endpoints. The installed version and flags have not been read from this server. |
+| Datament MCP Portal | **MemPalace not registered in the visible server list** | A read-only portal listing returned Ghost, Graphify and Logiscool, but no MemPalace server. No live MemPalace tool discovery or client call was possible through this portal. |
+| Source and deployment record | **Not established** | No Datament-specific MemPalace implementation repository, pinned commit, service definition, image digest or deployment record was verified. The upstream project is not proof of the installed revision. |
+| Backup and restore | **Not verified** | No backup manifest, recent successful restore test, storage-backend inventory or recovery point was inspected. |
+
+<Warning>
+  Do not treat the local installation report as proof that a network-facing MCP endpoint, Cloudflare routing, read-only policy or backup recovery is operational. No MemPalace installation, service, memory record, schedule or routing setting was changed for this documentation update.
+</Warning>
+
+## Architecture and data ownership
+
+The intended design keeps **one authoritative palace** for agent recall. Existing local mining or synchronization processes populate it; MCP clients read from that same data source without creating a competing writer or a second independent memory database.
+
+The earlier handoff described a local palace, a PM2 MCP proxy and scheduled refresh scripts. Their current ownership, request path and storage backend need a fresh local inventory. In particular, a running proxy does **not** establish that the upstream HTTP MCP server is running or exposed.
+
+The **proposed** remote path is:
+
+```text
+ChatGPT / other approved MCP clients
+  -> Cloudflare MCP Portal (user login and approved tools)
+  -> Cloudflare Access-protected upstream
+  -> existing tunnel / reverse proxy
+  -> MemPalace HTTP MCP server (read-only)
+  -> existing authoritative palace
+```
+
+This is a design target, **not a verified request path**. Use [Connection setup](/mcp/connection-setup) for reusable Cloudflare, tunnel, OAuth and client-connection steps. Do not create a second tunnel, replace working routes or duplicate that setup here. Graphify and MemPalace remain separate services; see [Graphify reference](/mcp/graphify-reference).
+
+## MCP tools and access policy
+
+The upstream [MCP integration guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/mcp-integration.md) documents these examples. They are **upstream tool names, not a tool list observed from the Datament portal**.
+
+| Category | Examples | Intended Datament exposure |
+| --- | --- | --- |
+| Status and taxonomy | `mempalace_status`, `mempalace_list_wings`, `mempalace_list_rooms`, `mempalace_get_taxonomy` | Read-only, subject to privacy review |
+| Recall | `mempalace_search`, `mempalace_get_drawer`, `mempalace_list_drawers` | Read-only, with approved content scope |
+| Relationships and continuity | `mempalace_kg_query`, `mempalace_kg_timeline`, `mempalace_diary_read` | Read-only only if the content is appropriate for portal clients |
+| Mutations | `mempalace_add_drawer`, `mempalace_delete_drawer`, `mempalace_mine`, `mempalace_diary_write` | Do **not** expose through the initial portal integration |
+
+The upstream `--read-only` mode is designed to hide and refuse mutating tools. **Before exposure, test the installed version's entire advertised tool list and try a forbidden mutation against non-sensitive test data.** Tool availability and host-side side effects can vary by version. A read-only flag does not provide per-project memory authorization by itself; never assume that one authorized client can only see its own wing.
+
+## Authentication and transport
+
+For a remote integration, retain separate controls:
+
+1. **Portal user authentication and tool approval** restrict who can connect to the portal.
+2. **Cloudflare Access service authentication** restricts the upstream route; configure it according to [Connection setup](/mcp/connection-setup).
+3. **MemPalace application bearer authentication** must be enforced when the HTTP service is reachable through a proxy or network. Keep credentials in the private deployment secret store and protected upstream headers, never in this repository.
+4. **MemPalace read-only restrictions** should prevent remote writes independently of the first three layers.
+
+Do not bind a tokenless MemPalace service to a network or publish a tokenless loopback service through a proxy. Verify the exact installed release's accepted flags and host-header behavior before enabling routing. No portal-specific credentials or upstream hostname have been verified here.
+
+## Storage, refresh and backups
+
+- **Authoritative storage:** Confirm the actual palace root, storage backend, collection identity and process owner locally. These details belong in private operational inventory, not this public page.
+- **Refresh:** Preserve the working mining and synchronization jobs. The prior handoff raised a possible duplicate scheduled refresh; inspect job ownership and actual execution history before changing any schedule.
+- **Concurrency:** Avoid a second independent writer. Upstream versions implement writer-lease handling, but the installed behavior must be checked against the pinned version before enabling an always-on HTTP service.
+- **Backup scope:** Capture the authoritative palace files and any backing database using an application-consistent procedure. For Qdrant, Milvus or another external backend, use that backend's supported snapshot/backup process rather than copying an assumed local directory.
+- **Restore confidence:** Keep credentials out of archives and the public repository, store encrypted backups with controlled access, and restore into an isolated target to confirm integrity, searchable recall and correct scope before touching production.
+
+**Pending evidence:** backup tooling, schedule, retention, last successful run, test-restore date and rollback recovery point. None is asserted to be in place.
+
+## Deployment and verification
+
+Keep the existing local MemPalace workflows unchanged until the deployment inventory is complete.
+
+1. **Inventory locally:** Record the installed MemPalace version, executable, backend, launch method, process manager, current palace status, active refresh jobs and any proxy configuration in private records. Locate the actual implementation repository and immutable revision, if applicable.
+2. **Choose one runtime:** If a dedicated HTTP service is needed, reuse the existing installation and palace. Decide between the current supervisor and a reviewed Docker/systemd deployment; do not silently add another persistent server.
+3. **Harden locally:** Start with read-only mode and application bearer authentication, a private network bind, a pinned version and a controlled service account. Do not publish an upstream until local read and denied-write tests pass.
+4. **Verify the service:** Where supported by the installed release, `GET /healthz` is a liveness check and authenticated `GET /statusz` reports server status. Verify the full MCP handshake, tool discovery and a harmless recall operation separately.
+5. **Expose through the portal:** Follow [Connection setup](/mcp/connection-setup). Confirm Access, tool synchronization, portal user login and a live read-only client call. Recheck that prohibited tools are absent or refused.
+6. **Verify operations:** Compare memory freshness with recent successful mining logs, check the refresh schedule for duplicate runs, review monitoring and alerting, and complete an isolated backup restore test.
+
+Until those checks have dated evidence, mark the portal integration **planned / unverified**, not deployed or accepted.
+
+## Monitoring and troubleshooting
+
+The [upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md) describes `/healthz` for liveness and protected `/statusz` for operational state. Watch service restarts, failed recalls, writer-lease errors, memory freshness, refresh job results, backend capacity and backup age. Record checks and alerts privately; none of these monitors was verified as configured on Datament.
+
+| Symptom | MemPalace-specific investigation |
+| --- | --- |
+| No MemPalace tools in ChatGPT | MemPalace is not currently in the visible portal server list; first verify local HTTP availability, registration and tool synchronization |
+| Local CLI works but HTTP fails | Check whether `mempalace serve` is actually running, the configured transport, private bind and installed-version flags |
+| Read-only mode still offers a state-changing tool | Stop external exposure and compare the installed version's tool registry and denial behavior with upstream implementation |
+| Search returns old or missing records | Inspect the authoritative backend, wing/room filters, last successful mining and potential duplicate or failed refresh jobs |
+| Writer lock or concurrent-write errors | Identify the current writer and stop competing starts; do not delete leases or data without an approved recovery procedure |
+| Health succeeds but clients cannot recall | Test the MCP handshake and authenticated read tool; liveness does not establish application authorization or data freshness |
+
+For Cloudflare 302/401/406/504 and OAuth troubleshooting, use the shared [Connection setup](/mcp/connection-setup) runbook.
+
+## Rollback and change control
+
+If a new remote integration causes errors, first disable **only the new MemPalace portal mapping** and stop **only the newly introduced HTTP service**, after checking existing local client dependencies. Preserve the existing palace, refresh jobs, PM2 proxy, Graphify, Ghost and Logiscool services. Revert the MemPalace service to its previously recorded configuration or pinned revision if one was changed. Validate local recall, refresh health and stored-data integrity afterward.
+
+Do **not** delete, reinitialize, migrate or overwrite the palace as a rollback shortcut. Before a production change, record the exact prior revision, supervisor configuration and tested restoration procedure privately.
+
+## Source references
+
+- [MemPalace upstream repository](https://github.com/MemPalace/mempalace)
+- [Upstream remote-server guide](https://github.com/MemPalace/mempalace/blob/develop/website/guide/remote-server.md)
+- [Upstream MCP tool overview](https://github.com/MemPalace/mempalace/blob/develop/website/guide/mcp-integration.md)
+- [Datament shared MCP connection setup](/mcp/connection-setup)
+- [Dated Datament MCP changelog](/mcp/changelog)
+
+Upstream documentation describes capabilities, not the exact installed MemPalace build. Recheck version-specific flags, security fixes and tool lists against the pinned installation before treating this page as a deployment runbook.

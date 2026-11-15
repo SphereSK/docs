@@ -23,6 +23,7 @@
           "mcp/connection-setup",
           "mcp/graphify-reference",
           "mcp/ghost-reference",
+          "mcp/mempalace-reference",
           "mcp/changelog"
         ]
       },
