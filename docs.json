@@ -9,7 +9,30 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Documentation",
+          "href": "https://mintlify.com/docs",
+          "icon": "book-open-cover"
+        },
+        {
+          "anchor": "Blog",
+          "href": "https://mintlify.com/blog",
+          "icon": "newspaper"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "group": "Plans",
+        "pages": [
+          "plans/decisions",
+          "plans/viventoo-content-plan",
+          "content/winter-campaign-2026-27",
+          "content/zimna-kampan-2026-27"
+        ]
+      },
       {
         "group": "Getting Started",
         "pages": [
@@ -29,26 +52,10 @@
       {
         "group": "Content",
         "pages": [
-          "content/viventoo-articles",
-          "content/winter-campaign-2026-27",
-          "content/zimna-kampan-2026-27"
+          "content/viventoo-articles"
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
